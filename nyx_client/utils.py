@@ -69,7 +69,7 @@ class Utils:
         return Utils.build_query(
             prompt
             + (
-                "and also using the table nyx_subscriptions where table_name is the name of the table the "
+                " Using the table nyx_subscriptions where table_name is the name of the table the "
                 "information came from, retrieve the source and url of the relevant table queried."
                 "When you go to say table, actually say sources. Output in markdown list format."
                 "You must include sources for all requests,where the table the results came from"

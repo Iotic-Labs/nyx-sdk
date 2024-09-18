@@ -65,62 +65,46 @@ from langchain_core.prompts import (
 
 from nyx_client.client import NyxClient
 from nyx_client.data import Data
-from nyx_client.utils import Parser, Utils
+from nyx_client.utils import Parser
 
+SELECT_SUBSCRIPTIONS = "SELECT file_title, url FROM nyx_subscriptions"
 EXAMPLES = [
     {
-        "input": "List all the characters in Anna Karenina",
-        "query": "SELECT DISTINCT characterNames FROM novels WHERE novelName = 'Anna Karenina'",
+        "ex_input": "What am I subscribed to?",
+        "ex_thought": "I need to find out what I am subscribed to. I will the tools available to me to query the "
+        "nyx_subscriptions table to find the information I need.",
+        "ex_query": SELECT_SUBSCRIPTIONS,
     },
 ]
 
 SYSTEM_PREFIX = """
-You are an agent designed to interact with an SQLite database containing data from a decentralized file sharing
-application. Given an input question, create a syntactically correct query to run against the database,
-then look at the results of the query and return the answer.
-Follow these steps:
+You are an agent designed to interact with a SQL database.
+    Given an input question, create a syntactically correct query to run, then look at the results of the query and 
+    return the answer. Unless the user specifies a specific number of examples they wish to obtain.
+    You can order the results by a relevant column to return the most interesting examples in the database.
+    You have access to tools for interacting with the database.
+    If you need to query all the rows, you can do so, but use DISTINCT when necessary.
+    Only use the given tools. Only use the information returned by the tools to construct your final answer.
+    You MUST double check your query before executing it. If you get an error while executing a query,
+    rewrite the query and try again.
+    DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
+    
+    If the question does not seem related to the database, just return "I don't know" as the answer.
+    When you find relevant sources, attempt to query them to find an answer to the original question.
+    
+    After arriving at the final answer, using the table nyx_subscriptions where table_name is the name of the table the 
+    information came from, retrieve the source and url of the relevant table queried. Always use the word sources 
+    instead of table(s). Output in markdown list format. You must include sources for all requests, where the table the 
+    results came from matches the table_name in nyx_subscriptions, and the relevant url from that table.
 
-Identify the relevant tables to query by examining the nyx_subscriptions table, which contains information about
-each file (table) in the database, including the name, url, description, and table_name.
-If the question is related to available products, subscriptions, or data, respond with a list of all entries from the
-nyx_subscriptions table, including the name, description, and url for each entry. Do not filter or limit the results
-for these specific queries. Other questions about Nyx that are not related to subscriptions, or any questions about
-subscriptions that are not related to nyx, you should reference other tables.
-
-Some tables contain a column called "context" this is a chunk that contains information from relevants files
-
-For other questions, determine which tables are most relevant based on the description and name columns in the
-nyx_subscriptions table. Query the schema of the relevant tables to understand their structure.
-Write an optimized query to answer the question based on the schema, selecting only the necessary columns.
-Avoid querying for all columns from a specific table.
-Execute the query and check the results. If you encounter an error, rewrite the query and try again.
-Return the query results as the answer in a human-readable format, citing the sources (tables) used.
-
-If the question does not seem related to the database, respond with: "I am not sure what data you're talking about.
-Please try asking again, referencing the specific data you're interested in."
-Remember:
-
-Only use the given tools and the information returned by the tools to construct your final answer.
-Do not make any DML statements (INSERT, UPDATE, DELETE, DROP, etc.) to the database.
-Order the results by a relevant column to return the most interesting examples, unless the user
-specifies a specific number of examples they wish to obtain.
-
-Your thought process should be as follows:
-
-Examine the full nyx_subscriptions table to identify relevant tables to query.
-Query the schema of the most relevant tables.
-Write an optimized query to answer the question based on the schema.
-Execute the query and check the results.
-Return the results of the query as the answer in a human-readable format, citing the sources (tables) used.
 """
 
 BASIC_PREFIX = """
     Begin!
 
     Question: {input}
-    Thought: I should look at the nyx_subscriptions table in the database to see what I can query.
-    Then I should query the schema of the most relevant tables.
-    {agent_scratchpad}
+    Thought:{agent_scratchpad}
+    Answer with analysis (do not prepend with "Answer:" or "Thought:"):
 
 """
 
@@ -128,7 +112,9 @@ EXAMPLE_PROMPT = ChatPromptTemplate.from_messages(
     messages=[
         ("human", "Hello, I am going to ask you a question now which you will need to answer using SQL."),
         ("ai", "OK, I will do my best to answer your question using SQL."),
-        ("human", "{query}"),
+        ("human", "{ex_input}"),
+        ("ai", "{ex_thought}"),
+        ("ai", "{ex_query}"),
     ]
 )
 
@@ -140,8 +126,7 @@ FEW_SHOT_PROMPT = FewShotChatMessagePromptTemplate(
 
 FORMAT_INSTRUCTIONS = (
     f"{react_prompt.FORMAT_INSTRUCTIONS}\n "
-    f"Here are some examples of user inputs and "
-    f"their corresponding SQL queries:\n"
+    f"Here are some examples of user inputs and their corresponding SQL queries:\n"
 )
 
 TEMPLATE = "\n\n".join([SYSTEM_PREFIX, FORMAT_INSTRUCTIONS, FEW_SHOT_PROMPT.format(), BASIC_PREFIX])
@@ -259,7 +244,7 @@ class NyxLangChain(NyxClient):
         res = agent_executor.invoke(
             {
                 "input": self.prompt.format(
-                    input=Utils.with_sources(query, database_tables=db.get_table_info()),
+                    input=query,
                     agent_scratchpad="",
                     tool_names=agent_executor.tools,
                 )
