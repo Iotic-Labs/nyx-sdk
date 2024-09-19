@@ -12,21 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# ruff: noqa: D104,D205,D212,D415
-"""
-.. include:: ../README.sdk.md
-   :start-line: 1
-   :end-before: </div>
+# ruff: noqa: F401
 
-.. include:: ../README.sdk.md
-   :start-after: </div>
-"""
+"""NYC client SDK."""
 
-from nyx_client.client import NyxClient as NyxClient
-from nyx_client.configuration import BaseNyxConfig as BaseNyxConfig
-from nyx_client.configuration import CohereNyxConfig as CohereNyxConfig
-from nyx_client.configuration import ConfigProvider as ConfigProvider
-from nyx_client.data import Data as Data
-from nyx_client.utils import Parser as Parser
-from nyx_client.utils import Utils as Utils
-from nyx_client.utils import VectorResult as VectorResult
+from nyx_client.client import NyxClient
+from nyx_client.configuration import BaseNyxConfig, CohereNyxConfig, ConfigProvider
+from nyx_client.data import Data
+from nyx_client.utils import Parser, Utils, VectorResult

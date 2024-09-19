@@ -1,1 +1,1 @@
-# ruff: noqa: D104
+"""NYX extensions."""
