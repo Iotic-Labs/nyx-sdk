@@ -130,7 +130,7 @@ If you encounter any issues, ensure that:
 - If an issue persists, check the Issues section on github
 
 For further assistance:
-- Refer to the [project documentation](https://github.com/Iotic-Labs/nyx-sdk)
+- Refer to the [project documentation](https://nyx-sdk.readthedocs.io/en/stable)
   - 💡 If you have cloned the Git repo, you can run `make docs` and then view `docs/index.html`.
 - [Raise an issue](https://github.com/Iotic-Labs/nyx-sdk/issues) on GitHub
 - [Chat with us](https://discord.gg/zS8pVHjqSf) on Discord [![Discord](https://img.shields.io/discord/1285252646554304555)](https://discord.gg/zS8pVHjqSf)
