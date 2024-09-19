@@ -253,7 +253,7 @@ class NyxLangChain(NyxClient):
         self.log.debug("using products: %s", [d.title for d in data])
 
         engine = Parser.data_as_db(data, additional_information=None, sqlite_file=sqlite_file, if_exists="replace")
-        db = SQLDatabase(engine=engine)
+        db = SQLDatabase(engine=engine, sample_rows_in_table_info=0)
         agent_executor = self.create_agent_func(self.llm, db=db, agent_type="tool-calling", verbose=self.verbose)
 
         res = agent_executor.invoke(
