@@ -5,7 +5,7 @@ PYTEST_ARGS?=-v
 .PHONY: clean setup-poetry install lint fix build docs generate-secrets
 
 clean:
-	rm -rf dist/ docs/
+	rm -rf dist/
 
 setup-poetry:
 	pip install poetry
@@ -25,7 +25,7 @@ build:
 	poetry build -f wheel && poetry build -f sdist
 
 docs:
-	poetry run python -m pdoc -d google --no-include-undocumented --output-dir docs nyx_client
+	cd docs && pip install -r requirements.txt && make clean html
 
 tests:
 	poetry run pytest test $(PYTEST_ARGS)

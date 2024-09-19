@@ -10,9 +10,6 @@ venv
 .venv
 jupyterlab
 
-# Documentation output
-docs/
-
 # Local user vars
 *.env
 
