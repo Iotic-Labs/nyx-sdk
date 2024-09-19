@@ -2,18 +2,18 @@
 
 # Nyx Client SDK
 
-![Version](https://img.shields.io/badge/version-0.1.0-blue)
-![License](https://img.shields.io/badge/License-Apache%202.0-yellow.svg)
-![Build](https://github.com/Iotic-Labs/nyx-sdk/actions/workflows/build.yaml/badge.svg?branch=main)
-![GitHub Repo stars](https://img.shields.io/github/stars/Iotic-Labs/nyx-sdk)
-![Discord](https://img.shields.io/discord/1285252646554304555)
+[![Version](https://img.shields.io/pypi/v/nyx-client)](https://pypi.org/project/nyx-client)
+[![License](https://img.shields.io/badge/License-Apache%202.0-yellow.svg)](https://github.com/Iotic-Labs/nyx-sdk/blob/main/LICENSE)
+[![Build](https://github.com/Iotic-Labs/nyx-sdk/actions/workflows/build.yaml/badge.svg?branch=main)](https://github.com/Iotic-Labs/nyx-sdk/actions/workflows/build.yaml)
+[![GitHub Repo stars](https://img.shields.io/github/stars/Iotic-Labs/nyx-sdk)](https://github.com/Iotic-Labs/nyx-sdk)
+[![Discord](https://img.shields.io/discord/1285252646554304555)](https://discord.gg/zS8pVHjqSf)
 
 
 🌟 **Nyx Client SDK** provides a powerful toolkit for building generative AI applications using data brokered on the Nyx platform.
 
 It enables decentralized data transfer, offering additional context (via a RAG setup) to language models within the trusted IOTICS network.
 
-![https://iotics.com](https://img.shields.io/badge/Powered%20by-Iotics-blue)
+[![https://iotics.com](https://img.shields.io/badge/Powered%20by-Iotics-blue)](https://iotics.com)
 </div>
 
 ## 🚧 Status
@@ -133,7 +133,7 @@ For further assistance:
 - Refer to the [project documentation](https://github.com/Iotic-Labs/nyx-sdk)
   - 💡 If you have cloned the Git repo, you can run `make docs` and then view `docs/index.html`.
 - [Raise an issue](https://github.com/Iotic-Labs/nyx-sdk/issues) on GitHub
-- [Chat with us](https://discord.gg/zS8pVHjqSf) on Discord ![Discord](https://img.shields.io/discord/1285252646554304555)
+- [Chat with us](https://discord.gg/zS8pVHjqSf) on Discord [![Discord](https://img.shields.io/discord/1285252646554304555)](https://discord.gg/zS8pVHjqSf)
 
 ## 🤝 Contributing
 
