@@ -184,9 +184,9 @@ class Parser:
                 if d.content_type == "csv":
                     content = pd.read_csv(StringIO(content), on_bad_lines="skip")
                 elif d.content_type in Parser._excel_mimes:
-                    content = pd.read_excel(StringIO(content), on_bad_lines="skip")
+                    content = pd.read_excel(StringIO(content))
                 elif d.content_type == "json":
-                    content = pd.read_json(StringIO(content), on_bad_lines="skip")
+                    content = pd.read_json(StringIO(content))
                 else:
                     log.warning("%s is unsupported type %s", d.title, d.content_type)
                     continue
