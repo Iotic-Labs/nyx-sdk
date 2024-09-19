@@ -1,0 +1,26 @@
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.10.14
+
+      - uses: snok/install-poetry@v1
+        with:
+          version: 1.8.3
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - run: poetry install --with dev --extras "langchain-openai langchain-cohere" --no-interaction
+
+      - run: make lint
+
+      - run: make tests

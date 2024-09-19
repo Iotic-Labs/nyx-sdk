@@ -1,0 +1,103 @@
+[tool.poetry]
+name = "nyx-client"
+version = "0.1.0"
+description = "Nyx Client SDK provides a powerful toolkit for building generative AI applications using data brokered on the Nyx platform."
+authors = [
+    "Iotics <info@iotics.com>",
+    "Andy Blair <andy.blair@iotics.com>",
+    "Conal McLaughlin <conal.mclaughlin@iotics.com>"
+]
+readme = "README.sdk.md"
+keywords = ["client", "data", "sdk", "ai", "exchange", "nyx", "rag", "gen-ai", "iotics"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Internet",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "License :: OSI Approved :: Apache Software License"
+]
+homepage = "https://www.get-nyx.io"
+repository = "https://github.com/Iotic-Labs/nyx-sdk"
+
+[tool.poetry.urls]
+"Issue tracker" = "https://github.com/Iotic-Labs/nyx-sdk/issues"
+"Chat" = "https://discord.gg/zS8pVHjqSf"
+"Changes" = "https://github.com/Iotic-Labs/nyx-sdk/blob/main/CHANGELOG.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+iotics-grpc-client = "^7.1.0"
+iotics-identity = "^2.0.0"
+scipy = "^1.14.0"
+numpy = "^1.26.4"
+pandas = "^2.2.2"
+scikit-learn = "^1.5.1"
+
+python-dotenv = "^1.0.1"
+names-generator = "^0.2.0"
+click = "^8.1.7"
+sqlalchemy = "^2.0.32"
+protobuf = "5.27.3"
+requests-toolbelt = "^1.0.0"
+
+# langchain extra
+langchain = { version = "^0.2.15", optional = true }
+langchain-community = { version = "^0.2.15", optional = true }
+langgraph = { version = "^0.2.16", optional = true }
+langchain-openai = { version = "^0.1.22", optional = true }
+langchain-cohere = { version = "^0.2.3", optional = true }
+
+[tool.poetry.group.dev.dependencies]
+pdoc = "14.6.0"
+ruff = "^0.5.6"
+pytest = "^8.3.2"
+pytest-mock = "^3.14.0"
+requests-mock = "^1.12.1"
+
+[tool.poetry.extras]
+langchain-openai = ["langchain", "langchain-community", "langgraph", "langchain-openai"]
+langchain-cohere = ["langchain", "langchain-community", "langgraph", "langchain-cohere"]
+
+[tool.poetry.scripts]
+nyx-client = "nyx_client.cli.__main__:cli"
+
+[tool.ruff]
+# Allow lines to be as long as 120.
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle
+    "F",    # Pyflakes
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "I",    # isort
+    "UP",   # pyupgrade
+    "T20",  # flake8-print
+    "FIX",  # flake8-fixme
+    "G004", # flake8-logging-format
+    "D",    # pydocstyle
+]
+ignore = [
+    "D100", # Missing docstring in public module
+    "D105", # Missing docstring in magic method
+]
+
+
+[tool.ruff.lint.per-file-ignores]
+"examples/**" = ["T20"]
+"test/**" = ["T20", "F", "SIM"]
+# Ignore pydocstyle rules everywhere except for actual client.
+"!nyx_client/**.py" = ["D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
