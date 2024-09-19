@@ -1,0 +1,238 @@
+<!--
+This is a generic chat web UI which can be used with any of the examples that create a web server (on port 5002)
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nyx. Assistant</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background-color: #f4f4f9;
+        }
+
+        .header {
+            background-color: #6200ea;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+            font-size: 24px;
+            font-weight: bold;
+            position: relative;
+        }
+
+        .clear-chat {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.3);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
+            width: 24px;
+            height: 24px;
+            line-height: 24px;
+            text-align: center;
+        }
+
+        .chat-container {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 75%;
+            word-wrap: break-word;
+        }
+
+        .chat-message.user {
+            background-color: #6200ea;
+            color: white;
+            align-self: flex-end;
+            text-align: right;
+        }
+
+        .chat-message.bot {
+            background-color: #e0e0e0;
+            color: black;
+            align-self: flex-start;
+        }
+
+        .ellipsis {
+            display: inline-block;
+            font-size: 24px;
+            line-height: 0;
+            letter-spacing: 2px;
+            position: relative;
+            width: 1em;
+            height: 1em;
+        }
+
+        .ellipsis::before,
+        .ellipsis::after {
+            content: '.';
+            position: absolute;
+            animation: ellipsis-animation 1.5s infinite;
+        }
+
+        .ellipsis::before {
+            left: 0;
+            animation-delay: 0s;
+        }
+
+        .ellipsis::after {
+            left: 0.5em;
+            animation-delay: 0.3s;
+        }
+
+        .ellipsis span {
+            position: absolute;
+            left: 1em;
+            animation: ellipsis-animation 1.5s infinite;
+            animation-delay: 0.6s;
+        }
+
+        @keyframes ellipsis-animation {
+            0% {
+                opacity: 0;
+            }
+            25% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0;
+            }
+            75% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        .input-container {
+            display: flex;
+            padding: 10px;
+            background-color: #ffffff;
+            border-top: 1px solid #cccccc;
+        }
+
+        .input-container input {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #cccccc;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+
+        .input-container button {
+            background-color: #6200ea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        Nyx. Assistant
+        <button class="clear-chat" onclick="clearChat()">×</button>
+    </div>
+
+    <div class="chat-container" id="chat-container">
+        <!-- Chat messages will be displayed here -->
+    </div>
+
+    <div class="input-container">
+        <input type="text" id="user-input" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        function sendMessage() {
+            const inputElement = document.getElementById('user-input');
+            const userInput = inputElement.value;
+            if (userInput.trim() === '') return;
+
+            // Display user message in the chat
+            const chatContainer = document.getElementById('chat-container');
+            const userMessageElement = document.createElement('div');
+            userMessageElement.className = 'chat-message user';
+            userMessageElement.textContent = userInput;
+            chatContainer.appendChild(userMessageElement);
+
+            // Clear the input box
+            inputElement.value = '';
+
+            // Scroll to the bottom of the chat container
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            // Display ellipsis animation
+            const ellipsisContainer = document.createElement('div');
+            ellipsisContainer.className = 'chat-message bot';
+            ellipsisContainer.id = 'ellipsis-container';
+            ellipsisContainer.innerHTML = '<span class="ellipsis">.<span>.</span></span>';
+            chatContainer.appendChild(ellipsisContainer);
+
+            // Send user input to backend server
+            fetch('http://127.0.0.1:5002/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ query: userInput })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Remove ellipsis animation
+                chatContainer.removeChild(ellipsisContainer);
+
+                // Display bot response as HTML in the chat
+                const botMessageElement = document.createElement('div');
+                botMessageElement.className = 'chat-message bot';
+                botMessageElement.innerHTML = data.message; // Using innerHTML to render HTML content
+                chatContainer.appendChild(botMessageElement);
+
+                // Scroll to the bottom of the chat container
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                chatContainer.removeChild(ellipsisContainer);
+            });
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function clearChat() {
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.innerHTML = ''; // Remove all child elements
+        }
+    </script>
+</body>
+</html>

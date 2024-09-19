@@ -1,0 +1,39 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+
+# Common virtualenv names
+env
+venv
+.venv
+jupyterlab
+
+# Documentation output
+docs/
+
+# Local user vars
+*.env
+
+# IDEs
+.idea
+.vscode
+*.code-workspace
+
+/.env
+.vsts.env
+*.pytest_cache
+*.log
+*.pyc
+static
+.bin
+.*.env
+sprints
+.DS_Store
+**/.venv/
+**/venv*
+**/dist/
+*/.python-version/
+**/.ipynb_checkpoints/
+*.json
