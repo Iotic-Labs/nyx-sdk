@@ -60,7 +60,7 @@ def test_data_download(requests_mock, mock_data_details):
 
     requests_mock.get(data.url, text="Test Content")
 
-    content = data.download()
+    content = data.as_string()
     assert content == "Test Content"
     assert data._content == "Test Content"
 
@@ -70,7 +70,7 @@ def test_data_download_cached(mocker, mock_data_details):
 
     data = Data(**mock_data_details)
     data._content = "Cached Content"
-    content = data.download()
+    content = data.as_string()
     assert content == "Cached Content"
     mock_urlopen.assert_not_called()
 
@@ -80,6 +80,6 @@ def test_nyx_data_download_failure(requests_mock, mock_data_details):
 
     requests_mock.get(data.url, exc=requests.exceptions.ConnectTimeout)
 
-    content = data.download()
+    content = data.as_string()
     assert content is None
     assert data._content is None

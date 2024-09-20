@@ -111,29 +111,52 @@ class Data:
     def __str__(self):
         return f"Data({self._title}, {self.url}, {self._content_type})"
 
-    def download(self) -> str | None:
-        """Download the content of the data and populate the class content field.
+    def as_string(self) -> str | None:
+        """Download the content of the data as as string.
 
-        This method attempts to download the content from the data's URL
-        and stores it in the `content` attribute.
+        This method attempts to download the content from the data's URL.
 
         Returns:
             The downloaded content as decoded text or None, if the download fails.
-
-        Note:
-            If the content has already been downloaded, this method returns the cached content without re-downloading.
         """
-        if not self._content:
-            try:
-                rsp = requests.get(self.url)
-                rsp.raise_for_status()
-                self._content = rsp.text
-            except requests.RequestException as ex:
-                log.warning(
-                    "Failed to download content of data [%s], "
-                    "confirm the source is still available with the data producer: %s",
-                    self._title,
-                    ex,
-                )
+        try:
+            rsp = requests.get(self.url)
+            rsp.raise_for_status()
+            return rsp.text
+        except requests.RequestException as ex:
+            log.warning(
+                "Failed to download content of data [%s], "
+                "confirm the source is still available with the data producer: %s",
+                self._title,
+                ex,
+            )
 
-        return self._content
+    def as_bytes(self) -> bytes | None:
+        """Download the content of the data as as bytes.
+
+        This method attempts to download the content from the data's URL.
+
+        Returns:
+            The downloaded content as bytes or None, if the download fails.
+        """
+        try:
+            rsp = requests.get(self.url)
+            rsp.raise_for_status()
+            return rsp.content
+        except requests.RequestException as ex:
+            log.warning(
+                "Failed to download content of data [%s], "
+                "confirm the source is still available with the data producer: %s",
+                self._title,
+                ex,
+            )
+
+    def download(self) -> str | None:
+        """DEPRICATED: Download the content of the data as as string.
+
+        This method attempts to download the content from the data's URL.
+
+        Returns:
+            The downloaded content as string or None, if the download fails.
+        """
+        return self.as_string()

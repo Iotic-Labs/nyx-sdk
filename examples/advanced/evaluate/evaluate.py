@@ -45,7 +45,7 @@ class Evaluator:
         self.data = client_openai_sm.get_subscribed_data()
         doc_str = ""
         for d in self.data:
-            contents = d.download()
+            contents = d.as_string()
             if contents:
                 doc_str += f"\n\n{d.name}: \n\n {contents}"
 
