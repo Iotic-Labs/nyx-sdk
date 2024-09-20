@@ -15,6 +15,7 @@
 """Module that manages individual Nyx Data."""
 
 import logging
+import warnings
 
 import requests
 
@@ -152,11 +153,17 @@ class Data:
             )
 
     def download(self) -> str | None:
-        """DEPRICATED: Download the content of the data as as string.
+        """Download the content of the data as a string.
 
         This method attempts to download the content from the data's URL.
 
         Returns:
-            The downloaded content as string or None, if the download fails.
+            The downloaded content as a string or None, if the download fails.
+
+        .. deprecated:: 0.2.0
+            Use `as_string()` or `as_bytes()` instead.
         """
+        warnings.warn(
+            "Will be removed in 0.2.0 Use as_string() or as bytes() instead", DeprecationWarning, stacklevel=0
+        )
         return self.as_string()
