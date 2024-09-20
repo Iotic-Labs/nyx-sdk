@@ -18,7 +18,7 @@ It enables decentralized data transfer, offering additional context (via a RAG s
 
 ## 🚧 Status
 
-The Nyx ecosystem is at an early stage of its development, please give us feedback through the [Github issues](https://github.com/Iotic-Labs/nyx-sdk/issues).
+The Nyx ecosystem is at an early stage of its development, please give us feedback through the [GitHub issues](https://github.com/Iotic-Labs/nyx-sdk/issues).
 
 ## What is the Nyx Client SDK
 
@@ -118,7 +118,7 @@ for data in subscribed_data:
 
 - If the Data has been deleted/disconnected from Nyx, the SDK will no longer be able to access it. Ensure that the data is still available.
 
-The Nyx ecosystem is at an early stage of its development, please give us feedback through [Github issues](https://github.com/Iotic-Labs/nyx-sdk/issues).
+The Nyx ecosystem is at an early stage of its development, please give us feedback through [GitHub issues](https://github.com/Iotic-Labs/nyx-sdk/issues).
 
 ## 🐞 Troubleshooting
 
@@ -127,7 +127,7 @@ If you encounter any issues, ensure that:
 - Your virtual environment is activated.
 - All required dependencies are installed.
 - Environment variables are set correctly.
-- If an issue persists, check the Issues section on github
+- If an issue persists, check the Issues section on GitHub
 
 For further assistance:
 - Refer to the [project documentation](https://nyx-sdk.readthedocs.io/en/stable)
