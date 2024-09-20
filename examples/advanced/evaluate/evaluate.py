@@ -69,14 +69,14 @@ class Evaluator:
 
             # Log any failures
             judgement = Result(accuracy=0, source_accuracy=0, sources=[])
-            return Test(result=judgement, input=query, output=f"{e}", execution_time=end_time, success=False)
+            return Test(result=judgement, input=query, output=f"{e}", execution_time=execution_time, success=False)
 
         end_time = time.time()
         execution_time = end_time - start_time
 
         # Get a scoring from the judge
         judgement_raw = judge.beta.chat.completions.parse(
-            model="gpt-4o-mini",
+            model="gpt-4o-2024-08-06",
             messages=[
                 {"role": "system", "content": JUDGE_PROMPT.format(file_names=[d.title for d in self.data])},
                 {"role": "user", "content": f"I asked: {query} Answer: {res} "},
