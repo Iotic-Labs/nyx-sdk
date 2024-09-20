@@ -62,17 +62,6 @@ def test_data_download(requests_mock, mock_data_details):
 
     content = data.as_string()
     assert content == "Test Content"
-    assert data._content == "Test Content"
-
-
-def test_data_download_cached(mocker, mock_data_details):
-    mock_urlopen = mocker.patch("urllib.request.urlopen")
-
-    data = Data(**mock_data_details)
-    data._content = "Cached Content"
-    content = data.as_string()
-    assert content == "Cached Content"
-    mock_urlopen.assert_not_called()
 
 
 def test_nyx_data_download_failure(requests_mock, mock_data_details):

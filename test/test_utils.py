@@ -10,40 +10,44 @@ from nyx_client.utils import Metadata, Parser, VectorResult
 
 @pytest.fixture
 def sample_csv_content():
-    return """
+    return bytes(
+        """
     id,name,value
     1,Alice,100
     2,Bob,200
     3,Charlie,300
-    """
+    """,
+        encoding="utf-8",
+    )
 
 
 @pytest.fixture
 def sample_csv_content_2():
-    return """
+    return bytes(
+        """
     id,name,value
     1,Andy,1000
     2,Conal,10
     3,Phil,300
-    """
+    """,
+        encoding="utf-8",
+    )
 
 
 @pytest.fixture
-def sample_data(sample_csv_content, sample_csv_content_2):
+def sample_data():
     return [
         Data(
             access_url="http://example.com/1",
             title="Test Data 1",
             org="TestOrg",
             mediaType="http://www.iana.org/assignments/media-types/text/csv",
-            content=sample_csv_content,
         ),
         Data(
             access_url="http://example.com/2",
             title="Test Data 2",
             org="TestOrg",
             mediaType="http://www.iana.org/assignments/media-types/text/csv",
-            content=sample_csv_content_2,
         ),
     ]
 
@@ -60,7 +64,7 @@ def test_dataset_as_db_empty_list():
 
 
 def test_dataset_as_db_with_data(sample_data, sample_csv_content):
-    with patch.object(Data, "download", return_value=sample_csv_content):
+    with patch.object(Data, "as_bytes", return_value=sample_csv_content):
         engine = Parser.data_as_db(sample_data)
         assert engine is not None, "Engine should not be None"
 
@@ -80,7 +84,7 @@ def test_dataset_as_vectors():
         Data(access_url="http://example.com/2", title="Test Data 2", org="TestOrg", mediaType="text/plain"),
     ]
 
-    with patch.object(Data, "download", side_effect=["This is a test content.", "Another test content here."]):
+    with patch.object(Data, "as_string", side_effect=["This is a test content.", "Another test content here."]):
         parser.data_as_vectors(data, chunk_size=4)
 
         assert parser.vectors is not None
