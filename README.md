@@ -1,7 +1,7 @@
 # Nyx
 "The secure data exchange for Generative AI and decentralised RAG"
 
-![https://iotics.com](https://img.shields.io/badge/Powered%20by-Iotics-blue)
+[![https://iotics.com](https://img.shields.io/badge/Powered%20by-Iotics-blue)](https://iotics.com)
 
 
 ## 🚧 Status
