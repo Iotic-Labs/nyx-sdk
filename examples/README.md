@@ -86,11 +86,11 @@ To get a feel for the NYX SDK without a local environment setup, you can try our
 Path | Summary
 -- | --
 [`examples/high_level/highlevel.ipynb`](./high_level/highlevel.ipynb) | Introduction to NYX SDK with minimal RAG demo code
-[`examples/advanced/advanced.ipynb`](./advanced/advanced.ipynb) | RAG demo showing how to put the building blocks together yourself (LLM, agent, RAG tooling) 
+[`examples/advanced/advanced.ipynb`](./advanced/advanced.ipynb) | RAG demo showing how to put the building blocks together yourself (LLM, agent, RAG tooling)
 
 ### Running in Google Colab
 
-Click [![Open All Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.,google.com/github/Iotic-Labs/nyx-sdk) , then select one of the above listed examples and start running it by clicking the "Play" button on the first code snippet.
+Click [![Open All Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Iotic-Labs/nyx-sdk), select one of the above listed examples and start running it by clicking the "Play" button on the first code snippet.
 
 ### Running with local [JupyterLab](https://jupyterlab.readthedocs.io/en/latest/)
 
