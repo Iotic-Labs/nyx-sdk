@@ -17,7 +17,7 @@
 import logging
 import os
 import sqlite3
-from io import StringIO
+from io import BytesIO
 from typing import Any, List, Literal, Optional
 
 import pandas as pd
@@ -177,17 +177,17 @@ class Parser:
         tables = []
         for d in data:
             table_name = Parser.normalise_values([d.title])[0]
-            content = d.download()
+            content = d.as_bytes()
             if content is None:
                 log.debug("Not adding table for %s as no content was found", d.title)
                 continue
             try:
                 if d.content_type == "csv":
-                    content = pd.read_csv(StringIO(content), on_bad_lines="skip")
+                    content = pd.read_csv(BytesIO(content), on_bad_lines="skip")
                 elif d.content_type in Parser._excel_mimes:
-                    content = pd.read_excel(StringIO(content))
+                    content = pd.read_excel(BytesIO(content))
                 elif d.content_type == "json":
-                    content = pd.read_json(StringIO(content))
+                    content = pd.read_json(BytesIO(content))
                 else:
                     log.warning("%s is unsupported type %s", d.title, d.content_type)
                     continue
@@ -259,7 +259,8 @@ class Parser:
 
         for d in data:
             if d.content_type != "csv":
-                content = d.download()
+                # Only vectorize plain text formats
+                content = d.as_string()
                 if content:
                     chunks = self._chunk_text(content, chunk_size)
                     all_chunks.extend(chunks)

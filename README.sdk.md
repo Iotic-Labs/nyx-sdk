@@ -112,7 +112,7 @@ client = NyxClient()
 subscribed_data = client.get_subscribed_data()
 for data in subscribed_data:
   print(f"Downloading data {data.name}")
-  content = data.download()
+  content = data.as_string() # Note if binary file use as_bytes to get content as bytes
 ```
 
 ## 👉 Gotchas
