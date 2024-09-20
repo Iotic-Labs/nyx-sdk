@@ -14,6 +14,7 @@
 
 """Module that contains utility functions, as well as tooling for manual parsing of data contained in Nyx."""
 
+import json
 import logging
 import os
 import sqlite3
@@ -187,12 +188,15 @@ class Parser:
                     content = pd.read_excel(StringIO(content))
                 elif d.content_type == "json":
                     content = pd.read_json(StringIO(content))
+                    # Parse out the lists.
+                    for col in content.select_dtypes(include=["object"]).columns:
+                        content[col] = content[col].apply(lambda x: json.dumps(x) if isinstance(x, (list, dict)) else x)
                 else:
                     log.warning("%s is unsupported type %s", d.title, d.content_type)
                     continue
                 content.columns = Parser.normalise_values(content.columns)
                 table_name = Parser.normalise_values([d.title])[0]
-                content.to_sql(table_name, db_engine)
+                content.to_sql(table_name, db_engine, if_exists=if_exists)
             except pd.errors.ParserError:
                 if d.content_type in ["csv", "json", *Parser._excel_mimes]:
                     log.warning("%s could not be processed as a %s", d.title, d.content_type)
