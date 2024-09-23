@@ -176,6 +176,7 @@ class Parser:
             return db_engine
         tables = []
         for d in data:
+            table_name = Parser.normalise_values([d.title])[0]
             content = d.download()
             if content is None:
                 log.debug("Not adding table for %s as no content was found", d.title)
@@ -191,7 +192,6 @@ class Parser:
                     log.warning("%s is unsupported type %s", d.title, d.content_type)
                     continue
                 content.columns = Parser.normalise_values(content.columns)
-                table_name = Parser.normalise_values([d.title])[0]
                 content.to_sql(table_name, db_engine)
             except pd.errors.ParserError:
                 if d.content_type in ["csv", "json", *Parser._excel_mimes]:
@@ -200,7 +200,7 @@ class Parser:
             except Exception as e:
                 log.warning("Unexpected error for %s: %s", d.title, e)
                 continue
-            tables.append([d.title, d.url, d.title.replace(" ", "_"), d.description])
+            tables.append([d.title, d.url, table_name, d.description])
 
         if additional_information and additional_information.chunks:
             for i in range(len(additional_information.chunks)):
@@ -212,8 +212,9 @@ class Parser:
                         "url": [meta.url],
                     }
                 )
-                df.to_sql(meta.title.replace(" ", "_"), db_engine, if_exists=if_exists)
-                tables.append([meta.title, meta.url, meta.title.replace(" ", "_"), meta.description])
+                title = Parser.normalise_values([meta.title])[0]
+                df.to_sql(title, db_engine, if_exists=if_exists)
+                tables.append([meta.title, meta.url, title, meta.description])
         if len(tables) > 0:
             df = pd.DataFrame(tables)
             df.columns = ["file_title", "url", "table_name", "description"]
