@@ -42,6 +42,16 @@ The Nyx SDK currently supports a variety of [LangChain](https://python.langchain
 To use these, you will need to expose the specific API key to your application through environment variables or instantiate the relevant configuration object with the key.
 
 ```shell
+export OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
+```
+or
+```python
+from nyx_client.configuration import ConfigProvider, ConfigType
+
+ConfigProvider.create_config(ConfigType.OPENAI, api_key="your_api_key_here")
+```
+or if using Cohere
+```shell
 export COHERE_API_KEY=<YOUR_COHERE_API_KEY>
 ```
 or
@@ -59,7 +69,7 @@ These use additional dependencies for an out-of-the-box experience with minimal 
 
 Example | Summary | Notes
 --|--|--
-[`highlevel.py::main()`](./high_level/highlevel.py) | Minimal CLI chat prompt, considering all subscribed-to Nyx data. | Defaults to [Cohere](https://cohere.com/) LLM but can easily be changed to use [OpenAI](https://openai.com/)
+[`highlevel.py::main()`](./high_level/highlevel.py) | Minimal CLI chat prompt, considering all subscribed-to Nyx data. | Defaults to [OpenAI](https://openai.com/) LLM but can easily be changed to use [Cohere](https://cohere)
 [`highlevel.py::custom_data()`](./high_level/highlevel.py) | Use a filtered set of data rather than all subscribed-to |
 [`highlevel.py::include_own_data()`](./high_level/highlevel.py) | Include own data in addition to subscribed-to |
 [`highlevel.py::custom_openai_llm()`](./high_level/highlevel.py) | Use a custom model instead of the nyx default one for an LLM. | This also demonstrates how do specify your own [`BaseChatModel`](https://api.python.langchain.com/en/latest/language_models/langchain_core.language_models.chat_models.BaseChatModel.html), i.e. any LLM provider supporting said LangChain interface.
