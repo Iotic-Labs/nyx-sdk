@@ -29,8 +29,8 @@ def main():
     When instantiating a language model specific config, the relevant API key must be available as an
     environment variable, or it must be passed in explicitly.
     """
-    # Supply ConfigType.OPENAI to use OpenAI LLM instead
-    config = ConfigProvider.create_config(ConfigType.COHERE, api_key="your_api_key_here")
+    # Supply ConfigType.COHERE to use Cohere LLM instead
+    config = ConfigProvider.create_config(ConfigType.OPENAI, api_key="your_api_key_here")
     client = NyxLangChain(config=config, log_level=logging.DEBUG)
     while True:
         prompt = input("What is your question? ")
@@ -46,7 +46,7 @@ def custom_data():
     speed up the prompt, by reducing the data, and also prevents the data being downloaded and processed
     automatically, giving you more control.
     """
-    config = ConfigProvider.create_config(ConfigType.COHERE, api_key="your_api_key_here")
+    config = ConfigProvider.create_config(ConfigType.OPENAI, api_key="your_api_key_here")
     client = NyxLangChain(config=config)
 
     # Get data with the climate category only
@@ -64,7 +64,7 @@ def include_own_data():
     """
     This displays how to include your own data, created in Nyx, in the query.
     """
-    config = ConfigProvider.create_config(ConfigType.COHERE, api_key="your_api_key_here")
+    config = ConfigProvider.create_config(ConfigType.OPENAI, api_key="your_api_key_here")
     client = NyxLangChain(config=config)
 
     while True:
