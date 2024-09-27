@@ -620,6 +620,13 @@ class NyxClient:
         Returns:
             A list of `Data` instances matching the specified creators.
         """
+        if not creators:
+            return []
+        if len(creators) == 1:
+            # EI-3364 - a single entry results in the query not projecting the creator variable. An additional empty
+            # filter will prevent this whilst not matching anything (since the creator field cannot be empty).
+            creators += [""]
+
         query = f"""
         {_SELECT}
         WHERE {{
