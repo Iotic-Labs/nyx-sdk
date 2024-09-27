@@ -265,6 +265,7 @@ class NyxClient:
 
         query = f"""
         PREFIX dcat: <http://www.w3.org/ns/dcat#>
+        PREFIX dct: <http://purl.org/dc/terms/>
 
         SELECT DISTINCT ?theme
         WHERE {{
@@ -285,11 +286,11 @@ class NyxClient:
             A list of genre names.
         """
         query = """
-        PREFIX dc: <http://purl.org/dc/terms/>
+        PREFIX dct: <http://purl.org/dc/terms/>
 
         SELECT DISTINCT ?genre
         WHERE {
-          ?s dc:type ?genre .
+          ?s dct:type ?genre .
         }
         """
 
@@ -304,11 +305,11 @@ class NyxClient:
         if len(self._subscribed_data) == 0:
             return []
         query = f"""
-        PREFIX dc: <http://purl.org/dc/terms/>
+        PREFIX dct: <http://purl.org/dc/terms/>
 
         SELECT DISTINCT ?genre
         WHERE {{
-          ?s dc:type ?genre .
+          ?s dct:type ?genre .
           ?s <{DATA_NAME}> ?name .
           ?s dct:creator ?creator .
           FILTER(?creator != "{self.config.org}")
