@@ -35,6 +35,15 @@ def init_env(filename: str = ".env"):
             click.echo("Exiting with no changes")
             return
 
+    # Check user is aware of T&Cs
+    tcs = input(
+        "The Nyx SDK allows the sharing of links through a Nyx Instance. "
+        + "By sharing data you must agree to the terms (https://www.get-nyx.io/terms) Agree? (y/N): "
+    )
+    if tcs.lower() != "y":
+        click.echo("You must agree to the terms of service!")
+        return
+
     # Get instance details, to get everything from API
     url = input("Enter Nyx URL: ").rstrip("/")
     email = input("Enter Nyx email: ")
