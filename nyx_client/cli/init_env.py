@@ -22,7 +22,7 @@ from nyx_client.cli.common import SDK_CLI_DEFAULT_HEADERS
 from nyx_client.identity_auth import IdentityAuth
 
 TERMS = """
-To use Nyx you must agree to our Terms of service when sharing content
+To use Nyx you must agree to our Terms of Service when sharing content
 
 
 I understand that the data I am uploading will be visible in the Nyx Playground,
@@ -31,6 +31,7 @@ I confirm that I have the right to share this data.
 I confirm that this data does not contain any Personally Identifiable Information
 or otherwise sensitive information, and that it does not violate any laws.
 I confirm I have read the Nyx Terms of Service and I am content to proceed.
+https://www.get-nyx.io/terms
 
 Agree (y/N):"""
 
@@ -51,7 +52,7 @@ def init_env(filename: str = ".env"):
     # Check user is aware of T&Cs
     tcs = input(TERMS)
     if tcs.lower() != "y":
-        click.echo("You must agree to the terms of service!")
+        click.echo("You must agree to the Terms of Service!")
         return
 
     # Get instance details, to get everything from API
