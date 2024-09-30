@@ -71,7 +71,7 @@ SELECT_SUBSCRIPTIONS = "SELECT file_title, url FROM nyx_subscriptions"
 EXAMPLES = [
     {
         "ex_input": "What am I subscribed to?",
-        "ex_thought": "I need to find out what I am subscribed to. I will the tools available to me to query the "
+        "ex_thought": "I need to find out what I am subscribed to. I will use the tools available to me to query the "
         "nyx_subscriptions table to find the information I need.",
         "ex_query": SELECT_SUBSCRIPTIONS,
     },
