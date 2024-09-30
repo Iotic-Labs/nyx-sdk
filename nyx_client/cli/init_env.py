@@ -21,6 +21,19 @@ import requests
 from nyx_client.cli.common import SDK_CLI_DEFAULT_HEADERS
 from nyx_client.identity_auth import IdentityAuth
 
+TERMS = """
+To use Nyx you must agree to our Terms of service when sharing content
+
+
+I understand that the data I am uploading will be visible in the Nyx Playground,
+including to users outside my organisation.
+I confirm that I have the right to share this data.
+I confirm that this data does not contain any Personally Identifiable Information
+or otherwise sensitive information, and that it does not violate any laws.
+I confirm I have read the Nyx Terms of Service and I am content to proceed.
+
+Agree (y/N):"""
+
 
 def init_env(filename: str = ".env"):
     """Interactively generate configuration and save it to the file with the given name."""
@@ -36,10 +49,7 @@ def init_env(filename: str = ".env"):
             return
 
     # Check user is aware of T&Cs
-    tcs = input(
-        "The Nyx SDK allows the sharing of links through a Nyx Instance. "
-        + "By sharing data you must agree to the terms (https://www.get-nyx.io/terms) Agree? (y/N): "
-    )
+    tcs = input(TERMS)
     if tcs.lower() != "y":
         click.echo("You must agree to the terms of service!")
         return
