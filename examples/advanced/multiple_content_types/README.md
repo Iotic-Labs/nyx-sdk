@@ -18,7 +18,7 @@ is able to apply the data to actually answer the users questions
 
  - Firstly create a virtual enviornment
  - `pip install -r requirements.txt` to install requirements
- - run `streamlit run main.py` and this will open your browser on the chat window
+ - run `streamlit run chat.py` and this will open your browser on the chat window
 
 ℹ️ Make sure you have set the `OPENAI_API_KEY` environment variable.
 

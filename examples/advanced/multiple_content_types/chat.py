@@ -1,6 +1,6 @@
-import streamlit as st
 import logging
 
+import streamlit as st
 from agent import build_structed_agent_and_datasets, combine
 
 log = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ if prompt := st.chat_input("What is up?"):
 
     # Get the TOP K chunk matches from unstructured text
     unstructed_response = parser.query(prompt, k=3)
-    
+
     response = combine(prompt, structed_response, " ".join(unstructed_response.chunks))
     # Display assistant response in chat message container
     with st.chat_message("assistant"):

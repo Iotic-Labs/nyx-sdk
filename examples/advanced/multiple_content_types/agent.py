@@ -1,18 +1,18 @@
 from typing import Tuple
 
 from dotenv import dotenv_values
-
 from langchain_openai import ChatOpenAI
 
 from nyx_client import Data
-from nyx_client.configuration import ConfigProvider, ConfigType, BaseHostConfig
+from nyx_client.configuration import BaseHostConfig, ConfigProvider, ConfigType
 from nyx_client.extensions.langchain import NyxLangChain
 from nyx_client.utils import Parser
 
-STRUCTED_DATA_CONTENT_TYPES = ['csv']
-UNSTRUCTED_DATA_CONTENT_TYPES = ['pdf', 'markdown', 'text', 'plain']
+STRUCTED_DATA_CONTENT_TYPES = ["csv"]
+UNSTRUCTED_DATA_CONTENT_TYPES = ["pdf", "markdown", "text", "plain"]
 
 judge = ChatOpenAI(model="gpt-4o-mini")
+
 
 def build_structed_agent_and_datasets() -> Tuple[NyxLangChain, list[Data], Parser]:
     """
@@ -33,16 +33,18 @@ def build_structed_agent_and_datasets() -> Tuple[NyxLangChain, list[Data], Parse
     config = ConfigProvider.create_config(ConfigType.OPENAI, host_config=host_config)
     agent = NyxLangChain(config)
     dataset = agent.get_subscribed_data()
-    structed = [d for d in dataset if d.content_type in STRUCTED_DATA_CONTENT_TYPES]
-    unstructed = [d for d in dataset if d.content_type in UNSTRUCTED_DATA_CONTENT_TYPES]
+    structured = [d for d in dataset if d.content_type in STRUCTED_DATA_CONTENT_TYPES]
+    unstructured = [d for d in dataset if d.content_type in UNSTRUCTED_DATA_CONTENT_TYPES]
 
     parser = Parser()
-    parser.data_as_vectors(unstructed, chunk_size=200)
-    return agent, structed, parser
+    parser.data_as_vectors(unstructured, chunk_size=200)
+    return agent, structured, parser
+
 
 def combine(query: str, structed: str, unstructed: str) -> str:
     query = f"""
-    You are being given a response from 2 agents, your job is to combine the input of both of them to answer the users query.
+    You are being given a response from 2 agents, your job is to combine the input of both of them to answer the users
+    query.
 
     Agent 1 is a structured agent, it has accessed a structured dataset and returned a response that includes sources
 
