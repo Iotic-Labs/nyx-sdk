@@ -46,11 +46,11 @@ protobuf = "5.27.3"
 requests-toolbelt = "^1.0.0"
 
 # langchain extra
-langchain = { version = "^0.2.15", optional = true }
-langchain-community = { version = "^0.2.15", optional = true }
-langgraph = { version = "^0.2.16", optional = true }
-langchain-openai = { version = "^0.1.22", optional = true }
-langchain-cohere = { version = "^0.2.3", optional = true }
+langchain = { version = "^0.3.1", optional = true }
+langchain-community = { version = "^0.3.1", optional = true }
+langchain-openai = { version = "^0.2.1", optional = true }
+langchain-cohere = { version = "^0.3.0", optional = true }
+langchain-groq = { version = "^0.2.0", optional = true }
 
 [tool.poetry.group.dev.dependencies]
 pdoc = "14.6.0"
@@ -60,8 +60,9 @@ pytest-mock = "^3.14.0"
 requests-mock = "^1.12.1"
 
 [tool.poetry.extras]
-langchain-openai = ["langchain", "langchain-community", "langgraph", "langchain-openai"]
-langchain-cohere = ["langchain", "langchain-community", "langgraph", "langchain-cohere"]
+langchain-openai = ["langchain", "langchain-community", "langchain-openai"]
+langchain-cohere = ["langchain", "langchain-community", "langchain-cohere"]
+langchain-groq = ["langchain", "langchain-community", "langchain-groq"]
 
 [tool.poetry.scripts]
 nyx-client = "nyx_client.cli.__main__:cli"

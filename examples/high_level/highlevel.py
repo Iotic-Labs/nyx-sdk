@@ -12,11 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import datetime
 import logging
+import os
 
 from nyx_client.configuration import ConfigProvider, ConfigType
 from nyx_client.extensions.langchain import NyxLangChain
 
+from langchain_groq.chat_models import ChatGroq
 
 def main():
     """
@@ -30,14 +33,15 @@ def main():
     environment variable, or it must be passed in explicitly.
     """
     # Supply ConfigType.COHERE to use Cohere LLM instead
-    config = ConfigProvider.create_config(ConfigType.OPENAI, api_key="your_api_key_here")
-    client = NyxLangChain(config=config, log_level=logging.DEBUG)
+    config = ConfigProvider.create_config(ConfigType.OPENAI)
+    client = NyxLangChain(config=config)
     while True:
         prompt = input("What is your question? ")
+        before = datetime.datetime.now()
         if prompt == "":
             continue
-        # When query is called, all subscribed data is pulled down from Nyx and supplied to the LLM.
-        print(client.query(prompt))
+        print(client.query(prompt, include_own=True))
+        print(f"Took {datetime.datetime.now() - before}s")
 
 
 def custom_data():
@@ -69,9 +73,11 @@ def include_own_data():
 
     while True:
         prompt = input("What is your question? ")
+        before = datetime.datetime.now()
         if prompt == "":
             continue
         print(client.query(prompt, include_own=True))
+        print(f"Took {datetime.datetime.now() - before}s")
 
 
 def custom_openai_llm():
@@ -84,15 +90,37 @@ def custom_openai_llm():
     from langchain_openai import ChatOpenAI
 
     config = ConfigProvider.create_config(ConfigType.OPENAI)
-    llm = ChatOpenAI(model_name="gpt-4o-mini", api_key=config.api_key)
+    llm = ChatOpenAI(name="gpt-4o", temperature=0)
     client = NyxLangChain(config=config, llm=llm)
 
     while True:
         prompt = input("What is your question? ")
+        before = datetime.datetime.now()
         if prompt == "":
             continue
         print(client.query(prompt, include_own=True))
+        print(f"Took {datetime.datetime.now() - before}s")
 
+def custom_groq_llm():
+    """
+    This displays how to pass an OpenAI model class into the client, this will be used to execute queries on.
+    In the LangChain module of Nyx, this will always be an instance of
+    langchain_core.language_models.chat_models.BaseChatModel. The LLM provided must support tool calling, or a
+    NotImplemented error will be raised.
+    """
+    from langchain_groq.chat_models import ChatGroq
+
+    config = ConfigProvider.create_config(ConfigType.OPENAI)
+    llm = ChatGroq(name="llama3-groq-70b-8192-tool-use-preview", temperature=0, api_key=os.environ["GROQ_KEY"])
+    client = NyxLangChain(config=config, llm=llm)
+
+    while True:
+        prompt = input("What is your question? ")
+        before = datetime.datetime.now()
+        if prompt == "":
+            continue
+        print(client.query(prompt, include_own=True))
+        print(f"Took {datetime.datetime.now() - before}s")
 
 if __name__ == "__main__":
-    custom_openai_llm()
+    main()
