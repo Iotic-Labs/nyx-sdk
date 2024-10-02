@@ -17,19 +17,14 @@
 import base64
 import json
 import logging
-import uuid
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Dict, Literal, Optional
 
-import grpc
 import requests
-from iotics.api.common_pb2 import Headers, Scope
-from iotics.api.meta_pb2 import SparqlQueryResponse, SparqlResultType
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 from nyx_client.configuration import BaseNyxConfig
 from nyx_client.data import Data
-from nyx_client.host_client import HostClient
 
 logging.basicConfig(format="%(asctime)s %(levelname)s [%(module)s] %(message)s", level=logging.INFO)
 
@@ -70,7 +65,6 @@ class NyxClient:
     """
 
     config: BaseNyxConfig
-    host_client: HostClient
 
     def __init__(
         self,
@@ -90,7 +84,7 @@ class NyxClient:
 
         self._token = self.config.override_token
         self._refresh = ""
-        self._subscribed_data: tuple[str] = ()
+        self._subscribed_data: list[str] = []
 
         self._setup()
 
@@ -109,8 +103,6 @@ class NyxClient:
         self.config.org = f"{qapi.get('org_name')}/{self.name}" if self.config.community_mode else qapi.get("org_name")
         self.config.host_config.host_url = qapi.get("grpc_url")
         self.config.host_config.resolver_url = qapi.get("resolver_url")
-
-        self.host_client = HostClient(self.config.host_config)
 
     def _nyx_post(self, endpoint: str, data: dict, headers: dict = None, multipart: MultipartEncoder = None) -> dict:
         if not headers:
@@ -154,14 +146,14 @@ class NyxClient:
         if not purchases:
             self._subscribed_data = []
             return
-        self._subscribed_data = tuple(k["product_name"] for k in purchases)
+        self._subscribed_data = [k["product_name"] for k in purchases]
 
     def close(self):
         """Cleanup any resources used by the client."""
         pass
 
     @property
-    def subscribed_data(self) -> tuple[str]:
+    def subscribed_data(self) -> list[str]:
         """Names of subscribed-to products.
 
         Can be explicitly updated by calling `update_subscriptions`.
@@ -177,7 +169,7 @@ class NyxClient:
         Returns:
             A list of dictionaries representing the query results.
         """
-        return self._sparql_query(query, Scope.LOCAL)
+        return self._sparql_query(query, "local")
 
     def _federated_sparql_query(self, query: str) -> list[Dict[str, str]]:
         """Execute a SPARQL query against the federated network.
@@ -188,9 +180,9 @@ class NyxClient:
         Returns:
             A list of dictionaries representing the query results.
         """
-        return self._sparql_query(query, Scope.GLOBAL)
+        return self._sparql_query(query, "global")
 
-    def _sparql_query(self, query: str, scope: Scope) -> list[Dict[str, str]]:
+    def _sparql_query(self, query: str, scope: Literal["local", "global"]) -> list[Dict[str, str]]:
         """Execute a SPARQL query and process the results.
 
         Args:
@@ -204,38 +196,25 @@ class NyxClient:
             ValueError: If the response is incomplete.
             grpc.RpcError: If there's an RPC error during the query execution.
         """
-        with self.host_client as client:
-            chunks: dict[int, SparqlQueryResponse] = {}
-            stream = client.api.sparql_api.sparql_query(
-                query,
-                result_content_type=SparqlResultType.SPARQL_JSON,
-                scope=scope,
-                headers=Headers(transactionRef=("nyx_sdk", str(uuid.uuid4()))),
-            )
-            try:
-                for response in stream:
-                    chunks[response.payload.seqNum] = response
-            except grpc.RpcError as err:
-                err: grpc._channel._MultiThreadedRendezvous
-                if err.code() != grpc.StatusCode.DEADLINE_EXCEEDED:
-                    raise err
+        headers = {"X-Requested-With": "nyx-sdk", "Content-Type": "application/json"}
+        if self._token:
+            headers["authorization"] = "Bearer " + self._token
+        resp = requests.post(
+            url=self.config.nyx_url + "/api/portal/meta/sparql",
+            data=query,
+            headers=headers,
+        )
+        resp.raise_for_status()
 
-            sorted_chunks = sorted(chunks.values(), key=lambda r: r.payload.seqNum)
-            if len(sorted_chunks) == 0:
-                return []
-            last_chunk = sorted_chunks[-1]
+        resp_json = resp.json()
+        results = []
+        for binding in resp_json["results"]["bindings"]:
+            inner_json = {}
+            for k in binding:
+                inner_json[k] = binding[k]["value"]
+            results.append(inner_json)
 
-            if not last_chunk.payload.last or len(chunks) != last_chunk.payload.seqNum + 1:
-                raise ValueError("Incomplete response")
-            resp_json = json.loads("".join([c.payload.resultChunk.decode() for c in sorted_chunks]))
-            results = []
-            for binding in resp_json["results"]["bindings"]:
-                inner_json = {}
-                for k in binding:
-                    inner_json[k] = binding[k]["value"]
-                results.append(inner_json)
-
-            return results
+        return results
 
     def get_all_categories(self) -> list[str]:
         """Retrieve all categories from the federated network.
@@ -600,11 +579,11 @@ class NyxClient:
             "size": size,
         }
 
-        download_url = resp.get("downloadURL")
+        resp_download_url = resp.get("downloadURL")
         access_url = resp.get("accessURL")
 
-        if download_url:
-            args["download_url"] = download_url
+        if resp_download_url:
+            args["download_url"] = resp_download_url
 
         if access_url:
             args["access_url"] = access_url

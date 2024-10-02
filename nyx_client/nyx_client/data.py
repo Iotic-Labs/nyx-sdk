@@ -15,7 +15,6 @@
 """Module that manages individual Nyx Data."""
 
 import logging
-import warnings
 
 import requests
 
@@ -64,9 +63,7 @@ class Data:
     @property
     def url(self):
         """The server generated url for brokered access to a subscribed dataset/product."""
-        if not self._access_url:
-            return self._download_url
-        return self._access_url + f"?buyer_org={self._org}"
+        return self._url + f"?buyer_org={self._org}"
 
     @property
     def content(self) -> str | None:
@@ -91,15 +88,14 @@ class Data:
                 f"Provided fields: {', '.join(kwargs.keys())}"
             )
 
-        self._title = kwargs.get("title")
-        self._access_url = kwargs.get("access_url")
-        self._download_url = kwargs.get("download_url")
+        self._title = kwargs["title"]
+        self._url = kwargs.get("access_url", kwargs["download_url"])
         self._org = kwargs.get("org")
         try:
-            self._size = int(kwargs.get("size"))
+            self._size = int(kwargs.get("size", 0))
         except (ValueError, TypeError):
             self._size = 0
-        self._creator = kwargs.get("creator")
+        self._creator = kwargs.get("creator", "unknown")
         self._content = None
         self._name = kwargs.get("name", "unknown")
         self._description = kwargs.get("description", "unkown description")
@@ -151,19 +147,3 @@ class Data:
                 self._title,
                 ex,
             )
-
-    def download(self) -> str | None:
-        """Download the content of the data as a string.
-
-        This method attempts to download the content from the data's URL.
-
-        Returns:
-            The downloaded content as a string or None, if the download fails.
-
-        .. deprecated:: 0.2.0
-            Use `as_string()` or `as_bytes()` instead.
-        """
-        warnings.warn(
-            "Will be removed in 0.2.0 Use as_string() or as bytes() instead", DeprecationWarning, stacklevel=0
-        )
-        return self.as_string()

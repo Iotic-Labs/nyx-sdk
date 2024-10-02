@@ -1,0 +1,76 @@
+[tool.poetry]
+name = "nyx-client"
+version = "0.1.4"
+description = "Nyx Client SDK provides a powerful toolkit for building generative AI applications using data brokered on the Nyx platform."
+authors = [
+    "Iotics <info@iotics.com>",
+    "Andy Blair <andy.blair@iotics.com>",
+    "Conal McLaughlin <conal.mclaughlin@iotics.com>"
+]
+readme = "README.md"
+keywords = ["client", "data", "sdk", "ai", "exchange", "nyx", "rag", "gen-ai", "iotics"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Internet",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "License :: OSI Approved :: Apache Software License"
+]
+homepage = "https://www.get-nyx.io"
+repository = "https://github.com/Iotic-Labs/nyx-sdk"
+documentation = "https://nyx-sdk.readthedocs.io/en/stable"
+
+[tool.poetry.urls]
+"Issue tracker" = "https://github.com/Iotic-Labs/nyx-sdk/issues"
+"Chat" = "https://discord.gg/zS8pVHjqSf"
+"Changes" = "https://github.com/Iotic-Labs/nyx-sdk/blob/main/CHANGELOG.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+requests-toolbelt = "^1.0.0"
+python-dotenv = "^1.0.1"
+click = "^8.1.7"
+
+[tool.ruff]
+# Allow lines to be as long as 120.
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle
+    "F",    # Pyflakes
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "I",    # isort
+    "UP",   # pyupgrade
+    "T20",  # flake8-print
+    "FIX",  # flake8-fixme
+    "G004", # flake8-logging-format
+    "D",    # pydocstyle
+]
+ignore = [
+    "D100", # Missing docstring in public module
+    "D105", # Missing docstring in magic method
+]
+
+
+[tool.ruff.lint.per-file-ignores]
+"examples/**" = ["T20"]
+"test/**" = ["T20", "F", "SIM"]
+# Ignore pydocstyle rules everywhere except for actual client.
+"!nyx_client/**.py" = ["D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.poetry.scripts]
+nyx-client = "nyx_core.cli.__main__:cli"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
