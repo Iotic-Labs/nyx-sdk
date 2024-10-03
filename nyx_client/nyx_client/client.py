@@ -21,6 +21,7 @@ from dataclasses import dataclass
 from typing import Dict, Literal, Optional
 
 import requests
+from requests.models import HTTPError
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 from nyx_client.configuration import BaseNyxConfig
@@ -101,8 +102,6 @@ class NyxClient:
         qapi = self._nyx_get("auth/qapi-connection")
         self.config.community_mode = qapi.get("community_mode", False)
         self.config.org = f"{qapi.get('org_name')}/{self.name}" if self.config.community_mode else qapi.get("org_name")
-        self.config.host_config.host_url = qapi.get("grpc_url")
-        self.config.host_config.resolver_url = qapi.get("resolver_url")
 
     def _nyx_post(self, endpoint: str, data: dict, headers: dict = None, multipart: MultipartEncoder = None) -> dict:
         if not headers:
@@ -196,14 +195,20 @@ class NyxClient:
             ValueError: If the response is incomplete.
             grpc.RpcError: If there's an RPC error during the query execution.
         """
-        headers = {"X-Requested-With": "nyx-sdk", "Content-Type": "application/json"}
+        headers = {
+            "X-Requested-With": "nyx-sdk",
+            "Content-Type": "application/json",
+            "Accept": "application/sparql-results+json"
+        }
         if self._token:
             headers["authorization"] = "Bearer " + self._token
-        resp = requests.post(
-            url=self.config.nyx_url + "/api/portal/meta/sparql",
-            data=query,
+        resp = requests.get(
+            url=self.config.nyx_url + "/api/portal/meta/sparql/" + scope,
+            params={"query": query},
             headers=headers,
         )
+        if resp.status_code >= 400:
+            log.warning(resp.json())
         resp.raise_for_status()
 
         resp_json = resp.json()

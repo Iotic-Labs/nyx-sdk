@@ -21,12 +21,11 @@ from io import BytesIO
 from typing import Any, List, Literal, Optional
 
 import pandas as pd
+from nyx_client.data import Data
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sqlalchemy import create_engine, engine
 from sqlalchemy.pool import StaticPool
-
-from nyx_client.data import Data
 
 logging.basicConfig(format="%(asctime)s %(levelname)s [%(module)s] %(message)s", level=logging.INFO)
 

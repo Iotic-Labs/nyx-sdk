@@ -62,7 +62,6 @@ from langchain_core.prompts import (
     FewShotChatMessagePromptTemplate,
     PromptTemplate,
 )
-
 from nyx_client.client import NyxClient
 from nyx_client.data import Data
 from nyx_client.utils import Parser, Utils

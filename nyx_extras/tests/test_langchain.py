@@ -3,7 +3,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from langchain_core.language_models import BaseChatModel
-
 from nyx_client.configuration import BaseNyxConfig
 from nyx_client.extensions.langchain import NyxLangChain
 

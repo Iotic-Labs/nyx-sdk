@@ -1,6 +1,5 @@
 from unittest.mock import MagicMock, patch
 
-import grpc
 import pytest
 import requests
 from requests_mock import ANY
@@ -121,11 +120,12 @@ def test_authorise_invalid_credentials(nyx_client):
             nyx_client._authorise()
 
 
-@patch("nyx_client.client.grpc", new_callable=MagicMock)
+# TODO: move to request PATCH
+#@patch("nyx_client.client.grpc", new_callable=MagicMock)
 def test_sparql_query_timeout(mock_grpc, nyx_client, host_client):
     mock_grpc.StatusCode.DEADLINE_EXCEEDED = MagicMock()
     with patch.object(host_client, "api") as mock_api:
-        mock_api.sparql_api.sparql_query.side_effect = grpc.RpcError("Timeout")
+        #mock_api.sparql_api.sparql_query.side_effect = grpc.RpcError("Timeout")
         result = nyx_client._sparql_query("SELECT * WHERE {}", mock_grpc.StatusCode.GLOBAL)
         assert result == []
 

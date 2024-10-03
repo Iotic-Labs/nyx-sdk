@@ -17,8 +17,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Scientific/Engineering",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "License :: OSI Approved :: Apache Software License"
+    "Topic :: Scientific/Engineering :: Artificial Intelligence", "License :: OSI Approved :: Apache Software License"
 ]
 homepage = "https://www.get-nyx.io"
 repository = "https://github.com/Iotic-Labs/nyx-sdk"
@@ -34,6 +33,13 @@ python = "^3.12"
 requests-toolbelt = "^1.0.0"
 python-dotenv = "^1.0.1"
 click = "^8.1.7"
+
+[tool.poetry.group.dev.dependencies]
+pdoc = "14.6.0"
+ruff = "^0.5.6"
+pytest = "^8.3.2"
+pytest-mock = "^3.14.0"
+requests-mock = "^1.12.1"
 
 [tool.ruff]
 # Allow lines to be as long as 120.
@@ -61,7 +67,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "examples/**" = ["T20"]
-"test/**" = ["T20", "F", "SIM"]
+"tests/**" = ["T20", "F", "SIM"]
 # Ignore pydocstyle rules everywhere except for actual client.
 "!nyx_client/**.py" = ["D"]
 
@@ -69,7 +75,7 @@ ignore = [
 convention = "google"
 
 [tool.poetry.scripts]
-nyx-client = "nyx_core.cli.__main__:cli"
+nyx-client = "nyx_client.cli.__main__:cli"
 
 [build-system]
 requires = ["poetry-core"]

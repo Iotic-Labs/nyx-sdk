@@ -27,120 +27,6 @@ from dotenv import dotenv_values
 
 
 @dataclass
-class BaseHostConfig:
-    """Configuration for the Host client.
-
-    Attributes:
-        host_url (str): The URL of the host.
-        host_verify_ssl (bool): Whether to verify the SSL certificate of the host.
-        resolver_url (str): The URL of the resolver.
-        did_user_id (str): The DID of the user.
-        did_agent_id (str): The DID of the agent.
-        did_agent_key_name (str): The key name of the agent.
-        did_agent_name (str): The name of the agent.
-        did_agent_secret (str): The secret of the agent.
-    """
-
-    required = [
-        "did_user_id",
-        "did_agent_id",
-        "did_agent_key_name",
-        "did_agent_name",
-        "did_agent_secret",
-    ]
-
-    def __init__(self, config: dict[str, Any]):
-        """Instantiates a new configuration.
-
-        Args:
-            config: A dictionary containing the configuration parameters.
-
-        Raises:
-            RuntimeError: If the configuration is invalid
-        """
-        self._host_url: str = config.get("HOST_URL")
-        self._host_verify_ssl: bool = config.get("HOST_VERIFY_SSL", True)
-        self._resolver_url: str = config.get("RESOLVER_URL")
-        self._did_user_id: str = config.get("DID_USER_DID")
-        self._did_agent_id: str = config.get("DID_AGENT_DID")
-        self._did_agent_key_name: str = config.get("DID_AGENT_KEY_NAME")
-        self._did_agent_name: str = config.get("DID_AGENT_NAME")
-        self._did_agent_secret: str = config.get("DID_AGENT_SECRET")
-
-        self._validate()
-
-    def _validate(self):
-        missing = [k for k in BaseHostConfig.required if getattr(self, k) is None]
-
-        if missing:
-            raise RuntimeError(f"Missing Required env vars {missing}")
-
-    @property
-    def host_url(self) -> str:
-        return self._host_url
-
-    @host_url.setter
-    def host_url(self, url):
-        self._host_url = url
-
-    @property
-    def host_verify_ssl(self) -> bool:
-        return self._host_verify_ssl
-
-    @host_verify_ssl.setter
-    def host_verify_ssl(self, verify):
-        self._host_verify_ssl = verify
-
-    @property
-    def resolver_url(self) -> str:
-        return self._resolver_url
-
-    @resolver_url.setter
-    def resolver_url(self, url):
-        self._resolver_url = url
-
-    @property
-    def did_user_id(self) -> str:
-        return self._did_user_id
-
-    @did_user_id.setter
-    def did_user_id(self, did):
-        self._did_user_id = did
-
-    @property
-    def did_agent_id(self) -> str:
-        return self._did_agent_id
-
-    @did_agent_id.setter
-    def did_agent_id(self, did):
-        self._did_agent_id = did
-
-    @property
-    def did_agent_key_name(self) -> str:
-        return self._did_agent_key_name
-
-    @did_agent_key_name.setter
-    def did_agent_key_name(self, key_name):
-        self._did_agent_key_name = key_name
-
-    @property
-    def did_agent_name(self) -> str:
-        return self._did_agent_name
-
-    @did_agent_name.setter
-    def did_agent_name(self, agent_name):
-        self._did_agent_name = agent_name
-
-    @property
-    def did_agent_secret(self) -> str:
-        return self._did_agent_secret
-
-    @did_agent_secret.setter
-    def did_agent_secret(self, secret):
-        self._did_agent_secret = secret
-
-
-@dataclass
 class BaseNyxConfig:
     """Configuration for the Nyx client.
 
@@ -165,7 +51,6 @@ class BaseNyxConfig:
         env_file: Optional[str] = None,
         override_token: str = "",
         validate: bool = True,
-        host_config: Optional[BaseHostConfig] = None,
     ):
         """Instantiate a new nyx base configuration.
 
@@ -182,21 +67,19 @@ class BaseNyxConfig:
 
         self._override_token: str = override_token
 
-        self._nyx_url: str = vals.get("NYX_URL", "https://nyx-community-1.dev.iotics.space")
-        self._nyx_username: str = vals.get("NYX_USERNAME")
-        self._nyx_email: str = vals.get("NYX_EMAIL")
-        self._nyx_password: str = vals.get("NYX_PASSWORD")
-        self._org: str = ""
-        self._host_url: str = ""
+        self.nyx_url: str = vals.get("NYX_URL", "https://nyx-community-1.dev.iotics.space")
+        self.nyx_username: str = vals.get("NYX_USERNAME")
+        self.nyx_email: str = vals.get("NYX_EMAIL")
+        self.nyx_password: str = vals.get("NYX_PASSWORD")
+        self.org: str = ""
+        self.host_url: str = ""
         self._host_verify_ssl: bool = vals.get("HOST_VERIFY_SSL", "True").lower() == "true"
-        self._resolver_url: str = ""
         self._community_mode: bool = False
         self._validated = False
 
         if validate and not self._validated:
             self.validate()
 
-        self._host_config = host_config if host_config else BaseHostConfig(vals)
 
     def validate(self):
         if self._validated:
@@ -212,36 +95,8 @@ class BaseNyxConfig:
         return json.dumps(self.__dict__)
 
     @property
-    def nyx_url(self) -> str:
-        return self._nyx_url
-
-    @nyx_url.setter
-    def nyx_url(self, url):
-        self._nyx_url = url
-
-    @property
-    def nyx_username(self) -> str:
-        return self._nyx_username
-
-    @property
-    def nyx_email(self) -> str:
-        return self._nyx_email
-
-    @property
-    def nyx_password(self) -> str:
-        return self._nyx_password
-
-    @property
     def nyx_auth(self) -> dict:
         return {"email": self.nyx_email, "password": self.nyx_password}
-
-    @property
-    def org(self) -> str:
-        return self._org
-
-    @org.setter
-    def org(self, org):
-        self._org = org
 
     @property
     def community_mode(self) -> bool:
@@ -259,14 +114,6 @@ class BaseNyxConfig:
     def override_token(self, token):
         self._override_token = token
 
-    @property
-    def host_config(self) -> BaseHostConfig:
-        return self._host_config
-
-    @host_config.setter
-    def host_config(self, config):
-        self._host_config = config
-
 
 @dataclass
 class CohereNyxConfig(BaseNyxConfig):
@@ -278,7 +125,6 @@ class CohereNyxConfig(BaseNyxConfig):
         env_file: Optional[str] = None,
         override_token: str = "",
         validate: bool = True,
-        host_config: Optional[BaseHostConfig] = None,
     ):
         """Instantiate a new Cohere nyx configuration.
 
@@ -293,7 +139,7 @@ class CohereNyxConfig(BaseNyxConfig):
             self._api_key: str = api_key
         else:
             self._api_key: str = os.getenv("COHERE_API_KEY", "")
-        super().__init__(env_file, override_token, validate, host_config)
+        super().__init__(env_file, override_token, validate)
 
         if validate:
             self.validate()
@@ -323,7 +169,6 @@ class OpenAINyxConfig(BaseNyxConfig):
         env_file: Optional[str] = None,
         override_token: str = "",
         validate: bool = True,
-        host_config: Optional[BaseHostConfig] = None,
     ):
         """Instantiate a new OpenAI nyx configuration.
 
@@ -338,7 +183,7 @@ class OpenAINyxConfig(BaseNyxConfig):
             self._api_key: str = api_key
         else:
             self._api_key: str = os.getenv("OPENAI_API_KEY", "")
-        super().__init__(env_file, override_token, validate, host_config)
+        super().__init__(env_file, override_token, validate)
 
         if validate:
             self.validate()
@@ -387,7 +232,6 @@ class ConfigProvider:
         env_file: Optional[str] = None,
         override_token: str = "",
         validate: bool = True,
-        host_config: Optional[BaseHostConfig] = None,
     ):
         config_class = ConfigProvider.config_classes.get(config_type)
         if not config_class:
@@ -401,7 +245,6 @@ class ConfigProvider:
             "env_file": env_file,
             "override_token": override_token,
             "validate": validate,
-            "host_config": host_config,
         }
 
         # If 'api_key' is part of the constructor, include it in the arguments

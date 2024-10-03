@@ -2,10 +2,9 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
-from sqlalchemy import text
-
 from nyx_client.data import Data
 from nyx_client.utils import Metadata, Parser, VectorResult
+from sqlalchemy import text
 
 
 @pytest.fixture

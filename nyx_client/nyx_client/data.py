@@ -29,31 +29,6 @@ class Data:
     """
 
     @property
-    def name(self) -> str:
-        """The unique name of the product."""
-        return self._name
-
-    @property
-    def title(self) -> str:
-        """The title of the product."""
-        return self._title
-
-    @property
-    def creator(self) -> str:
-        """The creator of the product."""
-        return self._creator
-
-    @property
-    def description(self) -> str:
-        """The description of the data."""
-        return self._description
-
-    @property
-    def size(self) -> int:
-        """The size of the product in bytes."""
-        return self._size
-
-    @property
     def content_type(self) -> str:
         """Content type (as a simple string, without IANA prefix)."""
         if self._content_type.startswith("http"):
@@ -63,12 +38,7 @@ class Data:
     @property
     def url(self):
         """The server generated url for brokered access to a subscribed dataset/product."""
-        return self._url + f"?buyer_org={self._org}"
-
-    @property
-    def content(self) -> str | None:
-        """The downloaded content of the product (None if not yet downloaded)."""
-        return self._content
+        return self._url + f"?buyer_org={self.org}"
 
     def __init__(self, **kwargs):
         """Initialize a Data instance.
@@ -87,18 +57,20 @@ class Data:
                 f"At least one of 'access_url' or 'download_url' is required. "
                 f"Provided fields: {', '.join(kwargs.keys())}"
             )
-
-        self._title = kwargs["title"]
-        self._url = kwargs.get("access_url", kwargs["download_url"])
-        self._org = kwargs.get("org")
+        print(kwargs)
+        self.title = kwargs["title"]
+        self._url = kwargs.get("access_url", "")
+        if self._url == "":
+            self._url = kwargs["download_url"]
+        self.org = kwargs.get("org")
         try:
             self._size = int(kwargs.get("size", 0))
         except (ValueError, TypeError):
             self._size = 0
-        self._creator = kwargs.get("creator", "unknown")
-        self._content = None
-        self._name = kwargs.get("name", "unknown")
-        self._description = kwargs.get("description", "unkown description")
+        self.creator = kwargs.get("creator", "unknown")
+        self.content = None
+        self.name = kwargs.get("name", "unknown")
+        self.description = kwargs.get("description", "unkown description")
 
         if content_type := kwargs.get("mediaType"):
             self._content_type = content_type
@@ -106,7 +78,7 @@ class Data:
             self._content_type = "unknown"
 
     def __str__(self):
-        return f"Data({self._title}, {self.url}, {self._content_type})"
+        return f"Data({self.title}, {self.url}, {self.content_type})"
 
     def as_string(self) -> str | None:
         """Download the content of the data as as string.
@@ -124,7 +96,7 @@ class Data:
             log.warning(
                 "Failed to download content of data [%s], "
                 "confirm the source is still available with the data producer: %s",
-                self._title,
+                self.title,
                 ex,
             )
 
@@ -144,6 +116,6 @@ class Data:
             log.warning(
                 "Failed to download content of data [%s], "
                 "confirm the source is still available with the data producer: %s",
-                self._title,
+                self.title,
                 ex,
             )
