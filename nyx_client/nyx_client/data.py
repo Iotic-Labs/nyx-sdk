@@ -1,4 +1,3 @@
-# Copyright © 2024 IOTIC LABS LTD. info@iotics.com
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -57,7 +56,6 @@ class Data:
                 f"At least one of 'access_url' or 'download_url' is required. "
                 f"Provided fields: {', '.join(kwargs.keys())}"
             )
-        print(kwargs)
         self.title = kwargs["title"]
         self._url = kwargs.get("access_url", "")
         if self._url == "":

@@ -16,20 +16,15 @@
 
 import base64
 import json
-import logging
 from dataclasses import dataclass
 from typing import Dict, Literal, Optional
 
 import requests
-from requests.models import HTTPError
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 from nyx_client.configuration import BaseNyxConfig
 from nyx_client.data import Data
-
-logging.basicConfig(format="%(asctime)s %(levelname)s [%(module)s] %(message)s", level=logging.INFO)
-
-log = logging.getLogger(__name__)
+from nyx_client.utils import ensure_setup, auth_retry
 
 NS_IOTICS = "http://data.iotics.com/iotics#"
 NS_NYX = "http://data.iotics.com/pnyx#"
@@ -86,10 +81,11 @@ class NyxClient:
         self._token = self.config.override_token
         self._refresh = ""
         self._subscribed_data: list[str] = []
-
-        self._setup()
+    
+        self._is_setup = False
 
     def _setup(self):
+        self._is_setup = True
         self._authorise(refresh=False)
 
         # Set user nickname
@@ -103,11 +99,13 @@ class NyxClient:
         self.config.community_mode = qapi.get("community_mode", False)
         self.config.org = f"{qapi.get('org_name')}/{self.name}" if self.config.community_mode else qapi.get("org_name")
 
+    @ensure_setup
+    @auth_retry
     def _nyx_post(self, endpoint: str, data: dict, headers: dict = None, multipart: MultipartEncoder = None) -> dict:
         if not headers:
             headers = {"X-Requested-With": "nyx-sdk", "Content-Type": "application/json"}
-        if self._token:
-            headers["authorization"] = "Bearer " + self._token
+        
+        headers["authorization"] = "Bearer " + self._token
         resp = requests.post(
             url=self.config.nyx_url + "/api/portal/" + endpoint,
             json=data if data else None,
@@ -118,6 +116,8 @@ class NyxClient:
 
         return resp.json()
 
+    @ensure_setup
+    @auth_retry
     def _nyx_get(self, endpoint: str) -> dict:
         headers = {"X-Requested-With": "nyx-sdk", "Content-Type": "application/json"}
         if self._token:
@@ -181,6 +181,8 @@ class NyxClient:
         """
         return self._sparql_query(query, "global")
 
+    @ensure_setup
+    @auth_retry
     def _sparql_query(self, query: str, scope: Literal["local", "global"]) -> list[Dict[str, str]]:
         """Execute a SPARQL query and process the results.
 
@@ -200,15 +202,12 @@ class NyxClient:
             "Content-Type": "application/json",
             "Accept": "application/sparql-results+json"
         }
-        if self._token:
-            headers["authorization"] = "Bearer " + self._token
+        headers["authorization"] = "Bearer " + self._token
         resp = requests.get(
             url=self.config.nyx_url + "/api/portal/meta/sparql/" + scope,
             params={"query": query},
             headers=headers,
         )
-        if resp.status_code >= 400:
-            log.warning(resp.json())
         resp.raise_for_status()
 
         resp_json = resp.json()
