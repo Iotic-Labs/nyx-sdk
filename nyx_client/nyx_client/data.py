@@ -78,6 +78,9 @@ class Data:
     def __str__(self):
         return f"Data({self.title}, {self.url}, {self.content_type})"
 
+    def __repr__(self) -> str:
+        return self.__str__()
+
     def as_string(self) -> str | None:
         """Download the content of the data as as string.
 

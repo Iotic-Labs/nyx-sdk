@@ -18,6 +18,7 @@ import base64
 import json
 from dataclasses import dataclass
 from typing import Dict, Literal, Optional
+import logging
 
 import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder
@@ -26,6 +27,7 @@ from nyx_client.configuration import BaseNyxConfig
 from nyx_client.data import Data
 from nyx_client.utils import ensure_setup, auth_retry
 
+log = logging.getLogger(__name__)
 NS_IOTICS = "http://data.iotics.com/iotics#"
 NS_NYX = "http://data.iotics.com/pnyx#"
 
