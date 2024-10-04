@@ -5,7 +5,7 @@ import requests
 from requests_mock import ANY
 
 from nyx_client.client import NyxClient
-from nyx_client.configuration import BaseHostConfig, BaseNyxConfig
+from nyx_client.configuration import BaseNyxConfig
 from nyx_client.data import Data
 
 
@@ -29,40 +29,16 @@ def mock_dotenv_values():
 
 
 @pytest.fixture
-def mock_host_config():
-    conf = {
-        "HOST_URL": "https://mock.host.url",
-        "HOST_VERIFY_SSL": False,
-        "RESOLVER_URL": "https://mock.resolver.url",
-        "DID_USER_DID": "did:iotics:iotZ7kSUpmAcAjdVzKKK4JUmC42tBPG6JRoP",
-        "DID_AGENT_DID": "did:iotics:iotZ7kSUpmAcAjdVzKKF4FUmC42tPBG7JRoP",
-        "DID_AGENT_KEY_NAME": "#mock_agent_key",
-        "DID_AGENT_NAME": "#mock_agent_name",
-        "DID_AGENT_SECRET": "54d1338492578b2d2c0cffb077f9242bd3824cbe0ce9f55e7b70ee38bcebdc9d",
-    }
-    yield BaseHostConfig(conf)
-
-
-@pytest.fixture
-def mock_config(mock_host_config):
+def mock_config():
     config = BaseNyxConfig(env_file=None, override_token="test_token", validate=False)
     config.org = "test"
-    config.host_config = mock_host_config
     yield config
 
 
 @pytest.fixture
-def host_client(mock_host_config):
-    with patch("nyx_client.client.HostClient") as mock_host_client:
-        mock_host_client.return_value = MagicMock()
-        yield mock_host_client
-
-
-@pytest.fixture
-def nyx_client(mock_config, host_client):
+def nyx_client(mock_config):
     with patch("nyx_client.client.NyxClient._setup"):
         client = NyxClient(config=mock_config)
-        client.host_client = host_client
         yield client
 
 
@@ -94,7 +70,15 @@ def test_delete_data(requests_mock, nyx_client):
 
     requests_mock.delete(f"https://mock.nyx.url/api/portal/products/{name}")
 
-    data = Data(access_url="http://test.com", title="Test", org="test_org", name=name)
+    data = Data(
+        url="http://test.com",
+        title="Test",
+        org="test_org",
+        name=name,
+        description="",
+        content_type="application/poney",
+        creator="me",
+    )
     nyx_client.delete_data(data)
     assert requests_mock.call_count == 1
 
@@ -118,16 +102,6 @@ def test_authorise_invalid_credentials(nyx_client):
         mock_post.side_effect = requests.HTTPError("401 Unauthorized")
         with pytest.raises(requests.HTTPError):
             nyx_client._authorise()
-
-
-# TODO: move to request PATCH
-#@patch("nyx_client.client.grpc", new_callable=MagicMock)
-def test_sparql_query_timeout(mock_grpc, nyx_client, host_client):
-    mock_grpc.StatusCode.DEADLINE_EXCEEDED = MagicMock()
-    with patch.object(host_client, "api") as mock_api:
-        #mock_api.sparql_api.sparql_query.side_effect = grpc.RpcError("Timeout")
-        result = nyx_client._sparql_query("SELECT * WHERE {}", mock_grpc.StatusCode.GLOBAL)
-        assert result == []
 
 
 def test_get_all_categories_empty_result(nyx_client):
@@ -191,23 +165,31 @@ def test_delete_data_not_found(requests_mock, nyx_client):
 
     requests_mock.delete(f"https://mock.nyx.url/api/portal/products/{name}", status_code=404)
 
-    data = Data(name=name, access_url="http://test.com", title="Test", org="test_org")
+    data = Data(
+        url="http://test.com",
+        title="Test",
+        org="test_org",
+        name=name,
+        description="",
+        content_type="application/poney",
+        creator="me",
+    )
     with pytest.raises(requests.HTTPError):
         nyx_client.delete_data(data)
 
 
 def test_get_subscribed_datasets_no_subscriptions(nyx_client):
-    assert nyx_client.get_subscribed_data() == []
+    assert nyx_client.get_data() == []
 
 
 def test_sparql_query_constructs_data(nyx_client):
     # Mock response from _sparql_query
-    mock_sparql_response = [
+    mock_response = [
         {
-            "access_url": "https://example.com/access",
+            "accessURL": "https://example.com/access",
             "title": "Test Data",
             "name": "test_data",
-            "mediaType": "application/json",
+            "contentType": "application/json",
             "creator": "TestCreator",
             "size": "321",
             "description": "Some description of sorts",
@@ -216,10 +198,10 @@ def test_sparql_query_constructs_data(nyx_client):
     nyx_client._subscribed_data = ["test_data"]
 
     # Patch the _sparql_query method to return our mock response
-    with patch.object(nyx_client, "_sparql_query", return_value=mock_sparql_response) as mock_sparql_query:
+    with patch.object(nyx_client, "_nyx_get", return_value=mock_response):
         # Call a method that uses _sparql_query and constructs Data
         # For this example, we'll use get_all_datasets, but you can use any method that fits
-        data = nyx_client.get_subscribed_data()
+        data = nyx_client.get_data()
 
         # Assert that we got a list with one data element
         assert len(data) == 1

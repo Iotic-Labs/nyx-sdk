@@ -21,7 +21,7 @@ import inspect
 import json
 import os
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
 
 from dotenv import dotenv_values
 
@@ -79,7 +79,6 @@ class BaseNyxConfig:
 
         if validate and not self._validated:
             self.validate()
-
 
     def validate(self):
         if self._validated:
