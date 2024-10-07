@@ -41,9 +41,11 @@ def auth_retry(func):
                 # Unauthorized error and haven't retried yet
                 self._authorise(refresh=True)
                 wrapper._retried = True
+                print("AUTH IS REFRESHED")
                 return func(self, *args, **kwargs)
             else:
                 # Either it's not an auth error or we've already retried
+                print("AUTH FAILED AGAIN :O")
                 raise
         finally:
             wrapper._retried = False

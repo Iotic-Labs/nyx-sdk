@@ -48,6 +48,8 @@ class Data:
         url: str,
         content_type: str,
         creator: str,
+        categories: list[str],
+        genre: str,
         size: int = 0,
     ):
         """Initialize a Data instance.
@@ -73,6 +75,8 @@ class Data:
         self._content_type = content_type
         self.size = size
         self.creator = creator
+        self.categories = categories
+        self.genre = genre
 
     def __str__(self):
         return f"Data({self.title}, {self.url}, {self.content_type})"

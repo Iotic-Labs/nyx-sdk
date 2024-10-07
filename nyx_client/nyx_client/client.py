@@ -28,27 +28,6 @@ from nyx_client.data import Data
 from nyx_client.utils import auth_retry, ensure_setup
 
 log = logging.getLogger(__name__)
-NS_IOTICS = "http://data.iotics.com/iotics#"
-NS_NYX = "http://data.iotics.com/pnyx#"
-
-DATA_NAME = NS_NYX + "productName"
-
-_SELECT = """
-        PREFIX dcat: <http://www.w3.org/ns/dcat#>
-        PREFIX dct: <http://purl.org/dc/terms/>
-
-        SELECT ?access_url ?title ?org ?name ?mediaType ?size ?creator ?description
-"""
-
-_COMMON_FILTER = f"""
-          ?s <{DATA_NAME}> ?name ;
-              dcat:accessURL ?access_url ;
-              dct:title ?title ;
-              dcat:mediaType ?mediaType ;
-              dct:creator ?creator ;
-              dcat:byteSize ?size ;
-              dct:description ?description .
-"""
 
 
 @dataclass
@@ -59,7 +38,6 @@ class NyxClient:
 
     Attributes:
         config: Configuration for the Nyx client.
-        host_client: Client for interacting with the host.
     """
 
     config: BaseNyxConfig
@@ -138,8 +116,9 @@ class NyxClient:
         if self._token:
             headers["authorization"] = "Bearer " + self._token
         resp = requests.get(url=self.config.nyx_url + "/api/portal/" + endpoint, headers=headers, params=params)
+        if resp.status_code == 400:
+            print(resp.json())
         resp.raise_for_status()
-
         return resp.json()
 
     @ensure_setup
@@ -210,7 +189,7 @@ class NyxClient:
             if len(self.subscribed_data) == 0:
                 return []
             limit = f"""
-            ?s <{DATA_NAME}> ?name .
+            ?s <http://data.iotics.com/pnyx#productName> ?name .
             FILTER({" || ".join([f'?name = "{data}"' for data in self.subscribed_data])})
             """
         query = f"""
@@ -250,13 +229,27 @@ class NyxClient:
         """
         return self._get_all_unique("dct:creator", include_all)
 
-    def get_data(self) -> list[Data]:
+    def get_data(
+            self,
+            categories: Optional[list[str]] = None,
+            genre: Optional[str] = None,
+            creator: Optional[str] = None,
+            text: Optional[str] = None,
+        ) -> list[Data]:
         """Retrieve subscribed data from the federated network.
 
         Returns:
             A list of `Data` instances.
         """
-        resps = self._nyx_get("products")
+        params = {}
+        if categories: params["categories"] = ",".join(categories)
+        if genre: params["genre"] = genre
+        if creator: params["creator"] = creator
+        if text: params["text"] = text
+        
+        print(params)
+        resps = self._nyx_get("meta/products", params=params)
+        print(resps)
         return [
             Data(
                 name=resp["name"],
@@ -266,6 +259,8 @@ class NyxClient:
                 content_type=resp["contentType"],
                 creator=resp["creator"],
                 org=self.config.org,
+                categories=resp["categories"],
+                genre=resp["genre"]
             )
             for resp in resps
         ]
