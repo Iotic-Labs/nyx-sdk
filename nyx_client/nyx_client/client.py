@@ -116,8 +116,6 @@ class NyxClient:
         if self._token:
             headers["authorization"] = "Bearer " + self._token
         resp = requests.get(url=self.config.nyx_url + "/api/portal/" + endpoint, headers=headers, params=params)
-        if resp.status_code == 400:
-            print(resp.json())
         resp.raise_for_status()
         return resp.json()
 
@@ -235,21 +233,24 @@ class NyxClient:
             genre: Optional[str] = None,
             creator: Optional[str] = None,
             text: Optional[str] = None,
+            include_all: bool = False,
+            timeout: int = 3,
         ) -> list[Data]:
         """Retrieve subscribed data from the federated network.
 
         Returns:
             A list of `Data` instances.
         """
-        params = {}
-        if categories: params["categories"] = ",".join(categories)
+        params = {
+            "include_subscribed": not include_all,
+            "timeout": timeout,
+        }
+        if categories: params["category"] = categories
         if genre: params["genre"] = genre
         if creator: params["creator"] = creator
         if text: params["text"] = text
         
-        print(params)
         resps = self._nyx_get("meta/products", params=params)
-        print(resps)
         return [
             Data(
                 name=resp["name"],
