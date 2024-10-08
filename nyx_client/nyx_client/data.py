@@ -64,6 +64,9 @@ class Data:
             url: the access URL of the data.
             content_type: content type of the data, can be in format application/json, or URI.
             size: size in bytes of the data.
+            genre: the genre of the data
+            description: the description of the data
+            categories: the categories of the data
             creator: Org name that created the data.
 
         Raises:

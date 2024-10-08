@@ -106,7 +106,7 @@ class NyxClient:
         resp.raise_for_status()
 
         return resp.json()
-    
+
     @ensure_setup
     @auth_retry
     def _nyx_patch(
@@ -133,7 +133,6 @@ class NyxClient:
         if self._token:
             headers["authorization"] = "Bearer " + self._token
         resp = requests.get(url=self.config.nyx_url + "/api/portal/" + endpoint, headers=headers, params=params)
-        print(resp.request.url)
         resp.raise_for_status()
         return resp.json()
 
@@ -157,7 +156,7 @@ class NyxClient:
             "X-Requested-With": "nyx-sdk",
             "Content-Type": "application/json",
             "Accept": "application/sparql-results+json",
-            "sdk-version": self._version
+            "sdk-version": self._version,
         }
         headers["authorization"] = "Bearer " + self._token
         resp = requests.get(
@@ -200,7 +199,7 @@ class NyxClient:
             A list of creator names.
         """
         return self._nyx_get("meta/creators")
-    
+
     def content_types(self) -> list[str]:
         """Retrieve all content Types from the federated network.
 
@@ -208,7 +207,7 @@ class NyxClient:
             A list of content types.
         """
         return self._nyx_get("meta/contentTypes")
-    
+
     def licenses(self) -> list[str]:
         """Retrieve all licenses from the federated network.
 
@@ -216,38 +215,39 @@ class NyxClient:
             A list of licenses.
         """
         return self._nyx_get("meta/licenses")
-    
+
     def search(
-            self,
-            categories: Optional[list[str]] = None,
-            genre: Optional[str] = None,
-            creator: Optional[str] = None,
-            text: Optional[str] = None,
-            license: Optional[str] = None,
-            content_type: Optional[str] = None,
-            subscription_state: Literal["subscribed", "all", "not-subscribed"] = "all",
-            timeout: int = 3,
-        ) -> list[Data]:
-        """Search for new data
+        self,
+        categories: Optional[list[str]] = None,
+        genre: Optional[str] = None,
+        creator: Optional[str] = None,
+        text: Optional[str] = None,
+        license: Optional[str] = None,
+        content_type: Optional[str] = None,
+        subscription_state: Literal["subscribed", "all", "not-subscribed"] = "all",
+        timeout: int = 3,
+    ) -> list[Data]:
+        """Search for new data.
 
         Returns:
             A list of `Data` instances.
         """
         url = "products"
-        params = {
-            "include": subscription_state,
-            "timeout": timeout,
-            "scope": "global"
-        }
-        if categories: params["category"] = categories
-        if genre: params["genre"] = genre
-        if creator: params["creator"] = creator
-        if license: params["license"] = license
-        if content_type: params["contentType"] = content_type
+        params = {"include": subscription_state, "timeout": timeout, "scope": "global"}
+        if categories:
+            params["category"] = categories
+        if genre:
+            params["genre"] = genre
+        if creator:
+            params["creator"] = creator
+        if license:
+            params["license"] = license
+        if content_type:
+            params["contentType"] = content_type
         if text:
             params["text"] = text
             url = "meta/search/text"
-        
+
         resps = self._nyx_get(url, params=params)
         return [
             Data(
@@ -259,36 +259,37 @@ class NyxClient:
                 creator=resp["creator"],
                 org=self.config.org,
                 categories=resp["categories"],
-                genre=resp["genre"]
+                genre=resp["genre"],
             )
             for resp in resps
         ]
 
     def get_data(
-            self,
-            categories: Optional[list[str]] = None,
-            genre: Optional[str] = None,
-            creator: Optional[str] = None,
-            license: Optional[str] = None,
-            content_type: Optional[str] = None,
-            subscription_state: Literal["subscribed", "all", "not-subscribed"] = "all",
-        ) -> list[Data]:
+        self,
+        categories: Optional[list[str]] = None,
+        genre: Optional[str] = None,
+        creator: Optional[str] = None,
+        license: Optional[str] = None,
+        content_type: Optional[str] = None,
+        subscription_state: Literal["subscribed", "all", "not-subscribed"] = "all",
+    ) -> list[Data]:
         """Retrieve subscribed data from the federated network.
 
         Returns:
             A list of `Data` instances.
         """
-        params: dict[str, Any] = {
-            "include": subscription_state,
-            "timeout": 10,
-            "scope": "global"
-        }
-        if categories: params["category"] = categories
-        if genre: params["genre"] = genre
-        if creator: params["creator"] = creator
-        if license: params["license"] = license
-        if content_type: params["contentType"] = content_type
-        
+        params: dict[str, Any] = {"include": subscription_state, "timeout": 10, "scope": "global"}
+        if categories:
+            params["category"] = categories
+        if genre:
+            params["genre"] = genre
+        if creator:
+            params["creator"] = creator
+        if license:
+            params["license"] = license
+        if content_type:
+            params["contentType"] = content_type
+
         resps = self._nyx_get("products", params=params)
         return [
             Data(
@@ -300,7 +301,7 @@ class NyxClient:
                 creator=resp["creator"],
                 org=self.config.org,
                 categories=resp["categories"],
-                genre=resp["genre"]
+                genre=resp["genre"],
             )
             for resp in resps
         ]
@@ -324,7 +325,7 @@ class NyxClient:
             creator=resp["creator"],
             org=self.config.org,
             categories=resp["categories"],
-            genre=resp["genre"]
+            genre=resp["genre"],
         )
 
     @ensure_setup
@@ -430,18 +431,18 @@ class NyxClient:
 
         if access_url:
             args["access_url"] = access_url
-        
+
         return Data(
-                name=name,
-                title=title,
-                description=description,
-                org=self.config.org,
-                content_type=content_type,
-                size=size,
-                url=access_url if access_url else resp_download_url,
-                creator=self.config.org,
-                categories=resp["categories"],
-                genre=resp["genre"]
+            name=name,
+            title=title,
+            description=description,
+            org=self.config.org,
+            content_type=content_type,
+            size=size,
+            url=access_url if access_url else resp_download_url,
+            creator=self.config.org,
+            categories=resp["categories"],
+            genre=resp["genre"],
         )
 
     @ensure_setup
@@ -530,19 +531,20 @@ class NyxClient:
 
         if access_url:
             args["access_url"] = access_url
-        
+
         return Data(
-                name=name,
-                title=title,
-                description=description,
-                org=self.config.org,
-                content_type=content_type,
-                size=size,
-                url=access_url if access_url else resp_download_url,
-                creator=self.config.org,
-                categories=resp["categories"],
-                genre=resp["genre"]
+            name=name,
+            title=title,
+            description=description,
+            org=self.config.org,
+            content_type=content_type,
+            size=size,
+            url=access_url if access_url else resp_download_url,
+            creator=self.config.org,
+            categories=resp["categories"],
+            genre=resp["genre"],
         )
+
     def delete_data(self, product: Data):
         """Delete the provided data from Nyx.
 
