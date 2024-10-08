@@ -18,7 +18,7 @@ import base64
 import json
 import logging
 from dataclasses import dataclass
-from typing import Dict, Literal, Optional
+from typing import Any, Dict, Literal, Optional
 
 import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder
@@ -60,9 +60,9 @@ class NyxClient:
 
         self._token = self.config.override_token
         self._refresh = ""
-        self.subscribed_data: list[str] = []
 
         self._is_setup = False
+        self._version = "0.2.0"
 
     def _setup(self):
         """This is auto called on first contact with API, to ensure config is set."""
@@ -72,8 +72,6 @@ class NyxClient:
         # Set user nickname
         self.name = self._nyx_get("users/me").get("name")
         log.debug("successful login as %s", self.name)
-
-        self.update_subscriptions()
 
         # Get host info
         qapi = self._nyx_get("auth/qapi-connection")
@@ -96,7 +94,7 @@ class NyxClient:
         self, endpoint: str, data: dict, headers: Optional[dict] = None, multipart: Optional[MultipartEncoder] = None
     ) -> Dict:
         if not headers:
-            headers = {"X-Requested-With": "nyx-sdk", "Content-Type": "application/json"}
+            headers = {"X-Requested-With": "nyx-sdk", "Content-Type": "application/json", "sdk-version": self._version}
 
         headers["authorization"] = "Bearer " + self._token
         resp = requests.post(
@@ -115,7 +113,7 @@ class NyxClient:
         self, endpoint: str, data: dict, headers: Optional[dict] = None, multipart: Optional[MultipartEncoder] = None
     ) -> Dict:
         if not headers:
-            headers = {"X-Requested-With": "nyx-sdk", "Content-Type": "application/json"}
+            headers = {"X-Requested-With": "nyx-sdk", "Content-Type": "application/json", "sdk-version": self._version}
 
         headers["authorization"] = "Bearer " + self._token
         resp = requests.patch(
@@ -131,10 +129,11 @@ class NyxClient:
     @ensure_setup
     @auth_retry
     def _nyx_get(self, endpoint: str, params: Optional[dict] = None) -> Dict:
-        headers = {"X-Requested-With": "nyx-sdk", "Content-Type": "application/json"}
+        headers = {"X-Requested-With": "nyx-sdk", "Content-Type": "application/json", "sdk-version": self._version}
         if self._token:
             headers["authorization"] = "Bearer " + self._token
         resp = requests.get(url=self.config.nyx_url + "/api/portal/" + endpoint, headers=headers, params=params)
+        print(resp.request.url)
         resp.raise_for_status()
         return resp.json()
 
@@ -158,6 +157,7 @@ class NyxClient:
             "X-Requested-With": "nyx-sdk",
             "Content-Type": "application/json",
             "Accept": "application/sparql-results+json",
+            "sdk-version": self._version
         }
         headers["authorization"] = "Bearer " + self._token
         resp = requests.get(
@@ -183,7 +183,7 @@ class NyxClient:
         Returns:
             A list of category names.
         """
-        return self._nyx_get("meta/lookup/categories")
+        return self._nyx_get("meta/categories")
 
     def genres(self) -> list[str]:
         """Retrieve all genres from the federated network.
@@ -191,7 +191,7 @@ class NyxClient:
         Returns:
             A list of genre names.
         """
-        return self._nyx_get("meta/lookup/genres")
+        return self._nyx_get("meta/genres")
 
     def creators(self) -> list[str]:
         """Retrieve all creators from the federated network.
@@ -199,7 +199,7 @@ class NyxClient:
         Returns:
             A list of creator names.
         """
-        return self._nyx_get("meta/lookup/creators")
+        return self._nyx_get("meta/creators")
     
     def content_types(self) -> list[str]:
         """Retrieve all content Types from the federated network.
@@ -207,7 +207,7 @@ class NyxClient:
         Returns:
             A list of content types.
         """
-        return self._nyx_get("meta/lookup/contentTypes")
+        return self._nyx_get("meta/contentTypes")
     
     def licenses(self) -> list[str]:
         """Retrieve all licenses from the federated network.
@@ -215,7 +215,7 @@ class NyxClient:
         Returns:
             A list of licenses.
         """
-        return self._nyx_get("meta/lookup/licenses")
+        return self._nyx_get("meta/licenses")
     
     def search(
             self,
@@ -225,7 +225,7 @@ class NyxClient:
             text: Optional[str] = None,
             license: Optional[str] = None,
             content_type: Optional[str] = None,
-            include_subscribed: bool = True,
+            subscription_state: Literal["subscribed", "all", "not-subscribed"] = "all",
             timeout: int = 3,
         ) -> list[Data]:
         """Search for new data
@@ -233,10 +233,11 @@ class NyxClient:
         Returns:
             A list of `Data` instances.
         """
-        url = "meta/products/query"
+        url = "products"
         params = {
-            "include_subscribed": include_subscribed,
+            "include": subscription_state,
             "timeout": timeout,
+            "scope": "global"
         }
         if categories: params["category"] = categories
         if genre: params["genre"] = genre
@@ -245,7 +246,7 @@ class NyxClient:
         if content_type: params["contentType"] = content_type
         if text:
             params["text"] = text
-            url = "meta/products/search"
+            url = "meta/search/text"
         
         resps = self._nyx_get(url, params=params)
         return [
@@ -263,7 +264,6 @@ class NyxClient:
             for resp in resps
         ]
 
-
     def get_data(
             self,
             categories: Optional[list[str]] = None,
@@ -271,17 +271,17 @@ class NyxClient:
             creator: Optional[str] = None,
             license: Optional[str] = None,
             content_type: Optional[str] = None,
-            include_subscribed: bool = True,
-            timeout: int = 3,
+            subscription_state: Literal["subscribed", "all", "not-subscribed"] = "all",
         ) -> list[Data]:
         """Retrieve subscribed data from the federated network.
 
         Returns:
             A list of `Data` instances.
         """
-        params = {
-            "include_subscribed": include_subscribed,
-            "timeout": timeout,
+        params: dict[str, Any] = {
+            "include": subscription_state,
+            "timeout": 10,
+            "scope": "global"
         }
         if categories: params["category"] = categories
         if genre: params["genre"] = genre
@@ -289,7 +289,7 @@ class NyxClient:
         if license: params["license"] = license
         if content_type: params["contentType"] = content_type
         
-        resps = self._nyx_get("meta/products/query", params=params)
+        resps = self._nyx_get("products", params=params)
         return [
             Data(
                 name=resp["name"],
@@ -326,15 +326,6 @@ class NyxClient:
             categories=resp["categories"],
             genre=resp["genre"]
         )
-
-    def update_subscriptions(self):
-        """Update the list of subscribed data."""
-        # Get all the data we're subscribed to, so the results are relevant to what the user wants
-        purchases = self._nyx_get("purchases/transactions")
-        if not purchases:
-            self.subscribed_data = []
-            return
-        self.subscribed_data = [k["product_name"] for k in purchases]
 
     @ensure_setup
     @auth_retry

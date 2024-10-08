@@ -14,12 +14,14 @@
 """Module that manages individual Nyx Data."""
 
 import logging
+from dataclasses import dataclass
 
 import requests
 
 log = logging.getLogger(__name__)
 
 
+@dataclass
 class Data:
     """Represents the data in the Nyx system.
 
