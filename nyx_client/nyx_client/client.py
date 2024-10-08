@@ -108,6 +108,25 @@ class NyxClient:
         resp.raise_for_status()
 
         return resp.json()
+    
+    @ensure_setup
+    @auth_retry
+    def _nyx_patch(
+        self, endpoint: str, data: dict, headers: Optional[dict] = None, multipart: Optional[MultipartEncoder] = None
+    ) -> Dict:
+        if not headers:
+            headers = {"X-Requested-With": "nyx-sdk", "Content-Type": "application/json"}
+
+        headers["authorization"] = "Bearer " + self._token
+        resp = requests.patch(
+            url=self.config.nyx_url + "/api/portal/" + endpoint,
+            json=data if data else None,
+            data=multipart if multipart else None,
+            headers=headers,
+        )
+        resp.raise_for_status()
+
+        return resp.json()
 
     @ensure_setup
     @auth_retry
@@ -158,82 +177,101 @@ class NyxClient:
 
         return results
 
-    def _local_sparql_query(self, query: str) -> list[Dict[str, str]]:
-        """Execute a SPARQL query against the configured IOTICS host.
-
-        Args:
-            query: The SPARQL query string.
-
-        Returns:
-            A list of dictionaries representing the query results.
-        """
-        return self._sparql_query(query, "local")
-
-    def _federated_sparql_query(self, query: str) -> list[Dict[str, str]]:
-        """Execute a SPARQL query against the federated network.
-
-        Args:
-            query: The SPARQL query string.
-
-        Returns:
-            A list of dictionaries representing the query results.
-        """
-        return self._sparql_query(query, "global")
-
-    def _get_all_unique(self, obj_name: str, include_all: bool = False) -> list[str]:
-        limit = ""
-        if include_all:
-            # For include all we add the name filter. But also check that there is subscribed data
-            if len(self.subscribed_data) == 0:
-                return []
-            limit = f"""
-            ?s <http://data.iotics.com/pnyx#productName> ?name .
-            FILTER({" || ".join([f'?name = "{data}"' for data in self.subscribed_data])})
-            """
-        query = f"""
-        PREFIX dcat: <http://www.w3.org/ns/dcat#>
-        PREFIX dct: <http://purl.org/dc/terms/>
-
-        SELECT DISTINCT ?thing
-        WHERE {{
-          ?s {obj_name} ?thing .
-          {limit}
-        }}
-        """
-
-        return [r["thing"] for r in self._federated_sparql_query(query)]
-
-    def get_categories(self, include_all: bool = False) -> list[str]:
+    def categories(self) -> list[str]:
         """Retrieve all categories from the federated network.
 
         Returns:
             A list of category names.
         """
-        return self._get_all_unique("dcat:theme", include_all)
+        return self._nyx_get("meta/lookup/categories")
 
-    def get_genres(self, include_all: bool = False) -> list[str]:
+    def genres(self) -> list[str]:
         """Retrieve all genres from the federated network.
 
         Returns:
             A list of genre names.
         """
-        return self._get_all_unique("dct:genre", include_all)
+        return self._nyx_get("meta/lookup/genres")
 
-    def get_creators(self, include_all: bool = False) -> list[str]:
+    def creators(self) -> list[str]:
         """Retrieve all creators from the federated network.
 
         Returns:
             A list of creator names.
         """
-        return self._get_all_unique("dct:creator", include_all)
+        return self._nyx_get("meta/lookup/creators")
+    
+    def content_types(self) -> list[str]:
+        """Retrieve all content Types from the federated network.
+
+        Returns:
+            A list of content types.
+        """
+        return self._nyx_get("meta/lookup/contentTypes")
+    
+    def licenses(self) -> list[str]:
+        """Retrieve all licenses from the federated network.
+
+        Returns:
+            A list of licenses.
+        """
+        return self._nyx_get("meta/lookup/licenses")
+    
+    def search(
+            self,
+            categories: Optional[list[str]] = None,
+            genre: Optional[str] = None,
+            creator: Optional[str] = None,
+            text: Optional[str] = None,
+            license: Optional[str] = None,
+            content_type: Optional[str] = None,
+            include_subscribed: bool = True,
+            timeout: int = 3,
+        ) -> list[Data]:
+        """Search for new data
+
+        Returns:
+            A list of `Data` instances.
+        """
+        url = "meta/products/query"
+        params = {
+            "include_subscribed": include_subscribed,
+            "timeout": timeout,
+        }
+        if categories: params["category"] = categories
+        if genre: params["genre"] = genre
+        if creator: params["creator"] = creator
+        if license: params["license"] = license
+        if content_type: params["contentType"] = content_type
+        if text:
+            params["text"] = text
+            url = "meta/products/search"
+        
+        resps = self._nyx_get(url, params=params)
+        return [
+            Data(
+                name=resp["name"],
+                title=resp["title"],
+                description=resp["description"],
+                url=resp["accessURL"],
+                content_type=resp["contentType"],
+                creator=resp["creator"],
+                org=self.config.org,
+                categories=resp["categories"],
+                genre=resp["genre"]
+            )
+            for resp in resps
+        ]
+
 
     def get_data(
             self,
             categories: Optional[list[str]] = None,
             genre: Optional[str] = None,
             creator: Optional[str] = None,
-            text: Optional[str] = None,
-            include_all: bool = False,
+            license: Optional[str] = None,
+            content_type: Optional[str] = None,
+            include_subscribed: bool = True,
             timeout: int = 3,
         ) -> list[Data]:
         """Retrieve subscribed data from the federated network.
@@ -242,15 +280,16 @@ class NyxClient:
             A list of `Data` instances.
         """
         params = {
-            "include_subscribed": not include_all,
+            "include_subscribed": include_subscribed,
             "timeout": timeout,
         }
         if categories: params["category"] = categories
         if genre: params["genre"] = genre
         if creator: params["creator"] = creator
-        if text: params["text"] = text
+        if license: params["license"] = license
+        if content_type: params["contentType"] = content_type
         
-        resps = self._nyx_get("meta/products", params=params)
+        resps = self._nyx_get("meta/products/query", params=params)
         return [
             Data(
                 name=resp["name"],
@@ -284,6 +323,8 @@ class NyxClient:
             content_type=resp["contentType"],
             creator=resp["creator"],
             org=self.config.org,
+            categories=resp["categories"],
+            genre=resp["genre"]
         )
 
     def update_subscriptions(self):
@@ -295,6 +336,8 @@ class NyxClient:
             return
         self.subscribed_data = [k["product_name"] for k in purchases]
 
+    @ensure_setup
+    @auth_retry
     def create_data(
         self,
         name: str,
@@ -405,9 +448,110 @@ class NyxClient:
                 content_type=content_type,
                 size=size,
                 url=access_url if access_url else resp_download_url,
-                creator=self.config.org
+                creator=self.config.org,
+                categories=resp["categories"],
+                genre=resp["genre"]
         )
 
+    @ensure_setup
+    def update_data(
+        self,
+        name: str,
+        title: str,
+        description: str,
+        size: int,
+        genre: str,
+        categories: list[str],
+        download_url: str,
+        content_type: str,
+        lang: str = "en",
+        status: str = "published",
+        preview: str = "",
+        price: int = 0,
+        license_url: str = "https://creativecommons.org/publicdomain/zero/1.0/",
+    ) -> Data:
+        """Updates existing data in the system.
+
+        This method updates data with the provided details and posts it to Nyx.
+
+        Args:
+            name: The unique identifier for the data.
+            title: The display title of the data.
+            description: A detailed description of the data.
+            size: The size of the data, typically in bytes.
+            genre: The genre or category of the data.
+            categories: A list of categories the data belongs to.
+            download_url: The URL where the data can be downloaded.
+            content_type: The mime type of the data located at download_url.
+            lang: The language of the data. Defaults to "en".
+            status: The publication status of the data. Defaults to "published".
+            preview: A preview or sample of the data. Defaults to an empty string.
+            price: The price of the data in cents. If 0, the data is free. Defaults to 0.
+            license_url: The URL of the license for the data. Defaults to Creative Commons Zero.
+
+        Returns:
+            A `Data` instance, containing the download URL and title.
+        """
+        input_bytes = preview.encode("utf-8")
+        base64_bytes = base64.b64encode(input_bytes)
+        preview_base64_string = base64_bytes.decode("utf-8")
+
+        data = {
+            "title": title,
+            "description": description,
+            "size": size,
+            "genre": genre,
+            "categories": categories,
+            "lang": lang,
+            "status": status,
+            "preview": preview_base64_string,
+            "downloadURL": download_url,
+            "licenseURL": license_url,
+            "contentType": content_type,
+        }
+        if price > 0:
+            data["price"] = price
+
+        multipart_data = MultipartEncoder(
+            fields={
+                "productMetadata": json.dumps(data),
+            }
+        )
+
+        headers = {"X-Requested-With": "nyx-sdk", "Content-Type": multipart_data.content_type}
+
+        resp = self._nyx_patch("products/" + name, data, headers, multipart_data)
+
+        args = {
+            "name": name,
+            "title": title,
+            "description": description,
+            "org": self.config.org,
+            "mediaType": content_type,
+            "size": size,
+        }
+
+        resp_download_url = resp.get("downloadURL")
+        access_url = resp.get("accessURL")
+
+        if resp_download_url:
+            args["download_url"] = resp_download_url
+
+        if access_url:
+            args["access_url"] = access_url
+        
+        return Data(
+                name=name,
+                title=title,
+                description=description,
+                org=self.config.org,
+                content_type=content_type,
+                size=size,
+                url=access_url if access_url else resp_download_url,
+                creator=self.config.org,
+                categories=resp["categories"],
+                genre=resp["genre"]
+        )
     def delete_data(self, product: Data):
         """Delete the provided data from Nyx.
 
@@ -416,6 +560,8 @@ class NyxClient:
         """
         self.delete_data_by_name(product.name)
 
+    @ensure_setup
+    @auth_retry
     def delete_data_by_name(self, name: str):
         """Delete the data uniquely identified by the provided name from Nyx.
 
