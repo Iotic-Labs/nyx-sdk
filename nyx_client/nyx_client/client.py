@@ -569,3 +569,33 @@ class NyxClient:
             headers=headers,
         )
         resp.raise_for_status()
+
+    @ensure_setup
+    def subscribe(self, data: Data):
+        """Subscribe to the data.
+
+        Args:
+            data: The data object to subscribed to.
+        """
+        body = {
+            "product_name": data.name,
+            "seller_org": data.creator,
+        }
+
+        self._nyx_post("purchases/transactions/", body)
+
+    @ensure_setup
+    def unsubscribe(self, data: Data):
+        """Unsubscribe to the data.
+
+        Args:
+            data: The data object to unsubscribe from.
+        """
+        headers = {"X-Requested-With": "nyx-sdk", "Content-Type": "application/json"}
+        if self._token:
+            headers["authorization"] = "Bearer " + self._token
+        resp = requests.delete(
+            url=self.config.nyx_url + f"/api/portal/purchases/transactions/{data.creator}/{data.name}",
+            headers=headers,
+        )
+        resp.raise_for_status()
