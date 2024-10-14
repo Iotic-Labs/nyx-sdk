@@ -27,8 +27,13 @@ from dotenv import dotenv_values
 
 # TODO - dataclasses?
 
-@dataclass
+@dataclass(frozen=True)
 class BaseNyxConfig:
+
+    username: str
+    # ...
+    override_token: str | None
+
     """Configuration for the Nyx client.
 
     Attributes:
@@ -69,13 +74,13 @@ class BaseNyxConfig:
         self._override_token: str = override_token
 
         self.nyx_url: str = vals.get("NYX_URL", "https://nyx-community-1.dev.iotics.space")
+        # TODO - just get at runtime?
         self.nyx_username: str = vals.get("NYX_USERNAME")
         self.nyx_email: str = vals.get("NYX_EMAIL")
         self.nyx_password: str = vals.get("NYX_PASSWORD")
-        self.org: str = ""
         self.host_url: str = ""
+        # TODO - no need for ssl (implied by http(s))
         self._host_verify_ssl: bool = vals.get("HOST_VERIFY_SSL", "True").lower() == "true"
-        self._community_mode: bool = False
         self._validated = False
 
         if validate and not self._validated:
@@ -98,21 +103,6 @@ class BaseNyxConfig:
     def nyx_auth(self) -> dict:
         return {"email": self.nyx_email, "password": self.nyx_password}
 
-    @property
-    def community_mode(self) -> bool:
-        return self._community_mode
-
-    @community_mode.setter
-    def community_mode(self, mode):
-        self._community_mode = mode
-
-    @property
-    def override_token(self) -> str:
-        return self._override_token
-
-    @override_token.setter
-    def override_token(self, token):
-        self._override_token = token
 
 
 @dataclass
@@ -121,10 +111,8 @@ class CohereNyxConfig(BaseNyxConfig):
 
     def __init__(
         self,
+        *args,
         api_key: Optional[str] = None,
-        env_file: Optional[str] = None,
-        override_token: str = "",
-        validate: bool = True,
     ):
         """Instantiate a new Cohere nyx configuration.
 
