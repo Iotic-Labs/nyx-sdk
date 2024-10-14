@@ -11,7 +11,7 @@ setup-poetry:
 	pip install poetry
 
 install:
-	poetry install --with dev --extras "langchain-openai langchain-cohere"
+	poetry install --with dev
 
 lint:
 	poetry run ruff check

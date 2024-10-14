@@ -1,3 +1,6 @@
+# TODO - remove this file and update all links to it to point to client dir one
+# TODO - docs generatino
+
 <div align="center">
 
 # Nyx Client SDK
@@ -121,7 +124,7 @@ for data in subscribed_data:
 
 The Nyx ecosystem is at an early stage of its development, please give us feedback through [Github issues](https://github.com/Iotic-Labs/nyx-sdk/issues).
 
-- If you get the SSL error 
+- If you get the SSL error
 `httpcore.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate`
 
 then it may be that you need to set some environment variables like this before running your script:

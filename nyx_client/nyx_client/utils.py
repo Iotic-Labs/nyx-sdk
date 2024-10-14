@@ -18,8 +18,9 @@ import requests
 
 
 def ensure_setup(func):
-    """Makes sure the client has performed inital setup."""
+    """Makes sure the client has performed initial setup."""
 
+    # TODO - Also only applicable to nyx get/post - perform check there
     @wraps(func)
     def wrapper(self, *args, **kwargs):
         if not self._is_setup:
@@ -33,6 +34,8 @@ def auth_retry(func):
     """Simple retry wrapper, that retries the function once, on 401."""
 
     @wraps(func)
+    # 1) remove self
+    # 2) given only get/post will use this - only wrap those two funcs (and maybe move out of here)
     def wrapper(self, *args, **kwargs):
         try:
             return func(self, *args, **kwargs)

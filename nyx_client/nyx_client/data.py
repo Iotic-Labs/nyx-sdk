@@ -20,6 +20,7 @@ import requests
 
 log = logging.getLogger(__name__)
 
+# TODO - dataclass
 
 @dataclass
 class Data:
@@ -39,6 +40,7 @@ class Data:
     @property
     def url(self):
         """The server generated url for brokered access to a subscribed dataset/product."""
+        # store as such if fixed instead of generating here?
         return self._url + f"?buyer_org={self.org}"
 
     def __init__(

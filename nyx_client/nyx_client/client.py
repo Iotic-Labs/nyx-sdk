@@ -37,7 +37,7 @@ NYX_META_CATEGORIES_ENDPOINT = "meta/categories"
 NYX_META_GENRES_ENDPOINT = "meta/genres"
 NYX_META_CREATORS_ENDPOINT = "meta/creators"
 NYX_META_CONTENT_TYPES_ENDPOINT = "meta/contentTypes"
-NYX_META_LICENSES_ENDPOINT = "meta/licenses"
+NYX_META_LICENSES_ENDPOINT = "meta/licenseURLs"
 NYX_PRODUCTS_ENDPOINT = "products"
 NYX_META_SEARCH_TEXT_ENDPOINT = "meta/search/text"
 NYX_PURCHASES_TRANSACTIONS_ENDPOINT = "purchases/transactions/"
@@ -45,6 +45,7 @@ NYX_PURCHASES_TRANSACTIONS_ENDPOINT = "purchases/transactions/"
 log = logging.getLogger(__name__)
 
 
+# not a dataclass?
 @dataclass
 class NyxClient:
     """A client for interacting with the Nyx system.
@@ -62,6 +63,7 @@ class NyxClient:
         env_file: Optional[str] = None,
         config: Optional[BaseNyxConfig] = None,
     ):
+        # TODO: The docstrings shouldn't include types - those are already in the function declarations
         """Initialize a new NyxClient instance.
 
         Args:
@@ -77,6 +79,8 @@ class NyxClient:
         self._refresh = ""
 
         self._is_setup = False
+        # Runtime property from install (or default)?
+        # Get like so? https://stackoverflow.com/a/74809114
         self._version = "0.2.0"
 
     def _setup(self):
@@ -85,10 +89,12 @@ class NyxClient:
         This method is automatically called on first contact with the API to ensure the configuration is set.
         It authorizes the client and sets up user and host information.
         """
+        # TODO - do at end of func so not True if has failed
         self._is_setup = True
         self._authorise(refresh=False)
 
         # Set user nickname
+        # Same as NYX_USERNAME in conf?
         self.name = self._nyx_get(NYX_USERS_ME_ENDPOINT).get("name")
         log.debug("successful login as %s", self.name)
 
@@ -115,6 +121,8 @@ class NyxClient:
     def _nyx_post(
         self, endpoint: str, data: dict, headers: Optional[dict] = None, multipart: Optional[MultipartEncoder] = None
     ) -> Dict:
+        # TODO - might not always return dict
+        # TODO - no typing in Returns
         """Send a POST request to the Nyx API.
 
         Args:
@@ -130,6 +138,7 @@ class NyxClient:
             requests.HTTPError: If the request fails.
         """
         if not headers:
+            # content type to always be provided? (share common headerts with get)
             headers = {"X-Requested-With": "nyx-sdk", "Content-Type": "application/json", "sdk-version": self._version}
 
         headers["authorization"] = "Bearer " + self._token
@@ -139,6 +148,9 @@ class NyxClient:
             data=multipart if multipart else None,
             headers=headers,
         )
+        # TODO: The end user would have to look inside HTTPError.response.(text|json) to get the actual reason for
+        # the failure rather than generic http error.
+        # This doesn't seem very friendly. We should probably make it easier than that.
         resp.raise_for_status()
 
         return resp.json()
@@ -178,7 +190,8 @@ class NyxClient:
 
     @ensure_setup
     @auth_retry
-    def _nyx_get(self, endpoint: str, params: Optional[dict] = None) -> Dict:
+    # The response is not just Dict - it could be Dict/str/number/list/bool
+    def _nyx_get(self, endpoint: str, params: Optional[dict] = None) -> Any:
         """Send a GET request to the Nyx API.
 
         Args:
@@ -186,11 +199,13 @@ class NyxClient:
             params (Optional[dict]): Query parameters to include in the request.
 
         Returns:
-            Dict: The JSON response from the API.
+            The decoded JSON response from the API.
 
         Raises:
             requests.HTTPError: If the request fails.
         """
+        # Content type not relevant to GET
+        # TODO - get not JSON?
         headers = {"X-Requested-With": "nyx-sdk", "Content-Type": "application/json", "sdk-version": self._version}
         if self._token:
             headers["authorization"] = "Bearer " + self._token
@@ -336,6 +351,8 @@ class NyxClient:
             for resp in resps
         ]
 
+    # TODO - shorthand to get subs?
+    # TODO - shorthand for getting own (created) data? (local + own org)
     def get_data(
         self,
         categories: Optional[list[str]] = None,
@@ -423,7 +440,10 @@ class NyxClient:
         lang: str = "en",
         status: str = "published",
         preview: str = "",
+        # default None (since can have no price) and also price is in dollars ), not cents.
+        # the diff between 0 & None might be that the former triggers a purchase flow whilst the latter doesn't
         price: int = 0,
+        # Default should be no license? (like in UI)
         license_url: str = "https://creativecommons.org/publicdomain/zero/1.0/",
     ) -> Data:
         """Create new data in the system.
@@ -505,6 +525,7 @@ class NyxClient:
             org=self.config.org,
             content_type=content_type,
             size=size,
+            # TODO - the access url will never be empty
             url=access_url if access_url else resp_download_url,
             creator=self.config.org,
             categories=resp["categories"],

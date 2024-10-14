@@ -25,6 +25,7 @@ from typing import Dict, Optional
 
 from dotenv import dotenv_values
 
+# TODO - dataclasses?
 
 @dataclass
 class BaseNyxConfig:
