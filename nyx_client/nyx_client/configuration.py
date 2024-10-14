@@ -17,11 +17,10 @@
 """SDK configuration classes."""
 
 import enum
-import inspect
 import json
 import os
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Dict
 
 from dotenv import dotenv_values
 
@@ -31,223 +30,131 @@ class BaseNyxConfig:
     """Configuration for the Nyx client.
 
     Attributes:
-        host_config (BaseHostConfig): Configuration for the host client.
-        nyx_url (str): The URL of the Nyx instance.
-        nyx_username (str): The username of the Nyx user.
-        nyx_email (str): The email of the Nyx user.
-        nyx_password (str): The password of the Nyx user.
-        org (str): The organisation name.
-        community_mode (bool): Whether the host is in community mode.
+        host_config: Configuration for the host client.
+        nyx_url: The URL of the Nyx instance.
+        nyx_username: The username of the Nyx user.
+        nyx_email: The email of the Nyx user.
+        nyx_password: The password of the Nyx user.
+        org: The organisation name.
+        community_mode: Whether the host is in community mode.
     """
 
-    required_if_token_empty = [
-        "nyx_email",
-        "nyx_password",
-    ]
-
-    def __init__(
-        self,
-        env_file: Optional[str] = None,
-        override_token: str = "",
-        validate: bool = True,
-    ):
+    def __init__(self, url: str, email: str, password: str, override_token: str | None = None):
         """Instantiate a new nyx base configuration.
 
         Args:
-            env_file: Path to the environment file. If None, dotenv will search for a .env file.
-            override_token: Token to override the default authentication. Defaults to username and password.
-            validate: Whether to validate the environment variables. Defaults to False.
-            host_config: Configuration for the host client.
+            url: The URL of the Nyx instance.
+            email: The email of the Nyx user.
+            password: The password of the Nyx user.
+            override_token: Token to override the default authentication.
+        """
+        self.nyx_url = url
+        self.nyx_email = email
+        self.nyx_password = password
+        self.override_token = override_token
 
+    @classmethod
+    def from_env(
+        cls,
+        env_file: str | None = None,
+        override_token: str | None = None,
+    ):
+        """Create a BaseNyxConfig instance from environment variables.
+
+        Args:
+            env_file: Path to the environment file.
+            override_token: Token to override the default authentication.
+
+        Returns:
+            A new BaseNyxConfig instance.
+
+        Raises:
+            OSError: If required environment variables are not set.
         """
         # Load from .env, note env vars will not be overwritten
         # If no env file supplied dotenv will traverse up the directory tree looking for a .env file
-        vals: Dict[str, Optional[str]] = dotenv_values(dotenv_path=env_file if env_file else None)
+        vals: Dict[str, str | None] = dotenv_values(dotenv_path=env_file if env_file else None)
+        url = vals.get("NYX_URL", "https://nyx-playground.iotics.space")
+        email = vals.get("NYX_EMAIL")
+        password = vals.get("NYX_PASSWORD")
 
-        self._override_token: str = override_token
-
-        self.nyx_url: str = vals.get("NYX_URL", "https://nyx-community-1.dev.iotics.space")
-        self.nyx_username: str = vals.get("NYX_USERNAME")
-        self.nyx_email: str = vals.get("NYX_EMAIL")
-        self.nyx_password: str = vals.get("NYX_PASSWORD")
-        self.org: str = ""
-        self.host_url: str = ""
-        self._host_verify_ssl: bool = vals.get("HOST_VERIFY_SSL", "True").lower() == "true"
-        self._community_mode: bool = False
-        self._validated = False
-
-        if validate and not self._validated:
-            self.validate()
-
-    def validate(self):
-        if self._validated:
-            return
-
-        # Only check for auth if no token is supplied
-        if not self.override_token:
-            missing = [k for k in BaseNyxConfig.required_if_token_empty if getattr(self, k) is None]
-            if len(missing) > 0:
-                raise OSError(f"Missing Required env vars {missing}")
+        if not url:
+            raise OSError("NYX_URL not set in env file")
+        if not email:
+            raise OSError("NYX_EMAIL not set in env file")
+        if not password:
+            raise OSError("NYX_PASSWORD not set in env file")
+        config = BaseNyxConfig(url, email, password, override_token)
+        return config
 
     def __str__(self):
+        """Return a string representation of the configuration.
+
+        Returns:
+            A JSON string of the configuration.
+        """
         return json.dumps(self.__dict__)
 
     @property
     def nyx_auth(self) -> dict:
+        """Get the authentication credentials.
+
+        Returns:
+            A dictionary containing email and password for authentication.
+        """
         return {"email": self.nyx_email, "password": self.nyx_password}
-
-    @property
-    def community_mode(self) -> bool:
-        return self._community_mode
-
-    @community_mode.setter
-    def community_mode(self, mode):
-        self._community_mode = mode
-
-    @property
-    def override_token(self) -> str:
-        return self._override_token
-
-    @override_token.setter
-    def override_token(self, token):
-        self._override_token = token
-
-
-@dataclass
-class CohereNyxConfig(BaseNyxConfig):
-    """Cohere specific configuration for the Nyx client."""
-
-    def __init__(
-        self,
-        api_key: Optional[str] = None,
-        env_file: Optional[str] = None,
-        override_token: str = "",
-        validate: bool = True,
-    ):
-        """Instantiate a new Cohere nyx configuration.
-
-        Args:
-            api_key: The Cohere API key.
-            env_file: Path to the environment file. If None, dotenv will search for a .env file.
-            override_token: Token to override the default authentication. Defaults to username and password.
-            validate: Whether to validate the environment variables. Defaults to False.
-            host_config: Configuration for the host client.
-        """
-        if api_key:
-            self._api_key: str = api_key
-        else:
-            self._api_key: str = os.getenv("COHERE_API_KEY", "")
-        super().__init__(env_file, override_token, validate)
-
-        if validate:
-            self.validate()
-
-    def validate(self):
-        if not self._api_key:
-            raise OSError("Missing Required env var: COHERE_API_KEY")
-        if not self._validated:
-            super().validate()
-
-    @property
-    def api_key(self) -> str:
-        return self._api_key
-
-    @api_key.setter
-    def api_key(self, api_key: str):
-        self._api_key = api_key
-
-
-@dataclass
-class OpenAINyxConfig(BaseNyxConfig):
-    """OpenAI specific configuration for the Nyx client."""
-
-    def __init__(
-        self,
-        api_key: Optional[str] = None,
-        env_file: Optional[str] = None,
-        override_token: str = "",
-        validate: bool = True,
-    ):
-        """Instantiate a new OpenAI nyx configuration.
-
-        Args:
-            api_key: The OpenAI API key.
-            env_file: Path to the environment file. If None, dotenv will search for a .env file.
-            override_token: Token to override the default authentication. Defaults to username and password.
-            validate: Whether to validate the environment variables. Defaults to False.
-            host_config: Configuration for the host client.
-        """
-        if api_key:
-            self._api_key: str = api_key
-        else:
-            self._api_key: str = os.getenv("OPENAI_API_KEY", "")
-        super().__init__(env_file, override_token, validate)
-
-        if validate:
-            self.validate()
-
-    def validate(self):
-        if not self._api_key:
-            raise OSError("Missing Required env var: OPENAI_API_KEY")
-        if not self._validated:
-            super().validate()
-
-    @property
-    def api_key(self) -> str:
-        return self._api_key
-
-    @api_key.setter
-    def api_key(self, api_key: str):
-        self._api_key = api_key
 
 
 @enum.unique
 class ConfigType(str, enum.Enum):
-    """nyx configuration types."""
+    """Nyx configuration types."""
 
     BASE = "base"
     OPENAI = "openai"
     COHERE = "cohere"
 
 
-class ConfigProvider:
-    """Factory class to create Nyx configuration objects.
+@dataclass(frozen=True)
+class NyxConfigExtended:
+    """Extended configuration for Nyx client with API integration.
 
     Attributes:
-        config_classes (dict): A dictionary of configuration classes: base, openai, cohere.
+        api_key: The API key for the selected provider.
+        provider: The type of configuration provider.
+        base_config: The base Nyx configuration.
     """
 
-    config_classes = {
-        ConfigType.BASE: BaseNyxConfig,
-        ConfigType.OPENAI: OpenAINyxConfig,
-        ConfigType.COHERE: CohereNyxConfig,
-    }
+    api_key: str
+    provider: ConfigType
+    base_config: BaseNyxConfig
 
-    @staticmethod
-    def create_config(
-        config_type: ConfigType,
-        api_key: Optional[str] = None,
-        env_file: Optional[str] = None,
-        override_token: str = "",
-        validate: bool = True,
+    @classmethod
+    def from_env(
+        cls,
+        provider: ConfigType,
+        env_file: str | None = None,
+        override_token: str | None = None,
     ):
-        config_class = ConfigProvider.config_classes.get(config_type)
-        if not config_class:
-            raise ValueError(f"Unknown config type: {config_type}")
+        """Create a NyxConfigExtended instance from environment variables.
 
-        constructor_signature = inspect.signature(config_class.__init__)
-        parameters = constructor_signature.parameters
+        Args:
+            provider: The type of configuration provider.
+            env_file: Path to the environment file.
+            override_token: Token to override the default authentication.
 
-        # Dynamically create arguments to pass based on what the constructor expects
-        kwargs = {
-            "env_file": env_file,
-            "override_token": override_token,
-            "validate": validate,
-        }
+        Returns:
+            A new NyxConfigExtended instance.
 
-        # If 'api_key' is part of the constructor, include it in the arguments
-        if "api_key" in parameters:
-            kwargs["api_key"] = api_key
-
-        # Call the config class with the correct arguments
-        return config_class(**kwargs)
+        Raises:
+            Exception: If an unsupported config type is provided.
+        """
+        api_key = ""
+        match provider:
+            case ConfigType.OPENAI:
+                api_key = os.environ["OPENAI_API_KEY"]
+            case ConfigType.COHERE:
+                api_key = os.environ["COHERE_API_KEY"]
+            case other:
+                raise Exception(f"{other} is not a config type")
+        base = BaseNyxConfig.from_env(env_file, override_token)
+        return NyxConfigExtended(api_key=api_key, provider=provider, base_config=base)

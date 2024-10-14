@@ -45,17 +45,16 @@ class Data:
         """Initialize a Data instance.
 
         Args:
-            name: unique name of data.
-            title: human readable title of data.
+            name: Unique name of data.
+            title: Human readable title of data.
             description: Short description of data.
-            org: your organization name
-            url: the access URL of the data.
-            content_type: content type of the data, can be in format application/json, or URI.
-            size: size in bytes of the data.
-            genre: the genre of the data
-            description: the description of the data
-            categories: the categories of the data
+            org: Your organization name.
+            url: The access URL of the data.
+            content_type: Content type of the data, can be in format application/json, or URI.
             creator: Org name that created the data.
+            categories: The categories of the data.
+            genre: The genre of the data.
+            size: Size in bytes of the data.
 
         Raises:
             KeyError: If any of the required fields are missing.
@@ -66,7 +65,6 @@ class Data:
         self.org = org
         self.url = url + f"?buyer_org={self.org}"
         self.content_type = content_type
-
         if content_type.startswith("http"):
             self.content_type = content_type.split("/")[-1]
         self.size = size
@@ -75,13 +73,15 @@ class Data:
         self.genre = genre
 
     def __str__(self):
+        """Return a string representation of the Data instance."""
         return f"Data({self.title}, {self.url}, {self.content_type})"
 
     def __repr__(self) -> str:
+        """Return a string representation of the Data instance."""
         return self.__str__()
 
     def as_string(self) -> str | None:
-        """Download the content of the data as as string.
+        """Download the content of the data as a string.
 
         This method attempts to download the content from the data's URL.
 
@@ -101,7 +101,7 @@ class Data:
             )
 
     def as_bytes(self) -> bytes | None:
-        """Download the content of the data as as bytes.
+        """Download the content of the data as bytes.
 
         This method attempts to download the content from the data's URL.
 

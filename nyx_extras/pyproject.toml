@@ -52,7 +52,7 @@ ruff = "^0.5.6"
 pytest = "^8.3.2"
 pytest-mock = "^3.14.0"
 requests-mock = "^1.12.1"
-nyx-client = {path = "../nyx-client", develop = true}
+nyx-client = {path = "../nyx_client", develop = true}
 
 [tool.poetry.extras]
 langchain-openai = ["langchain", "langchain-community", "langgraph", "langchain-openai"]

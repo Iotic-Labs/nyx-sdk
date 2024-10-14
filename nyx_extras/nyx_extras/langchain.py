@@ -16,9 +16,8 @@
 
 import logging
 import os
-from typing import Optional
 
-from nyx_client.configuration import BaseNyxConfig, CohereNyxConfig, OpenAINyxConfig
+from nyx_client.configuration import ConfigType, NyxConfigExtended
 
 try:
     from langchain_community.agent_toolkits import create_sql_agent
@@ -64,7 +63,8 @@ from langchain_core.prompts import (
 )
 from nyx_client.client import NyxClient
 from nyx_client.data import Data
-from nyx_client.utils import Parser, Utils
+
+from nyx_extras import Parser, Utils
 
 EXAMPLES = [
     {
@@ -160,11 +160,11 @@ class NyxLangChain(NyxClient):
 
     def __init__(
         self,
-        config: Optional[BaseNyxConfig] = None,
-        env_file: Optional[str] = None,
-        llm: Optional[BaseChatModel] = None,
+        config: NyxConfigExtended | None = None,
+        env_file: str | None = None,
+        llm: BaseChatModel | None = None,
         log_level: int = logging.WARN,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
     ):
         """Initialise a new langChain client.
 
@@ -175,7 +175,9 @@ class NyxLangChain(NyxClient):
             log_level: the logging level to use for nyx client, and langchain modules
             system_prompt: provide an override for the system prompt
         """
-        super().__init__(env_file, config)
+        if not config:
+            config = NyxConfigExtended.from_env(provider=ConfigType.OPENAI, env_file=env_file)
+        super().__init__(env_file, config.base_config)
         logging.basicConfig(format="%(asctime)s %(levelname)s [%(module)s] %(message)s", level=log_level)
 
         # Disable langchain network requests log
@@ -195,21 +197,22 @@ class NyxLangChain(NyxClient):
             if isinstance(self.llm, ChatCohere):
                 self.create_agent_func = create_cohere_sql_agent
         else:
-            if isinstance(self.config, CohereNyxConfig):
-                self.llm = ChatCohere(
-                    model=DEFAULT_COHERE_MODEL,
-                    cohere_api_key=self.config.api_key,
-                    temperature=0.0,
-                )
-                self.create_agent_func = create_cohere_sql_agent
-            elif isinstance(self.config, OpenAINyxConfig):
-                self.llm = ChatOpenAI(
-                    model=DEFAULT_OPENAI_MODEL,
-                    api_key=self.config.api_key,
-                    temperature=0.0,
-                )
-            else:
-                raise ValueError("No language model provided and no valid config found")
+            match config.provider:
+                case ConfigType.OPENAI:
+                    self.llm = ChatOpenAI(
+                        model=DEFAULT_OPENAI_MODEL,
+                        api_key=config.api_key,
+                        temperature=0.0,
+                    )
+                case ConfigType.COHERE:
+                    self.llm = ChatCohere(
+                        model=DEFAULT_COHERE_MODEL,
+                        cohere_api_key=config.api_key,
+                        temperature=0.0,
+                    )
+                    self.create_agent_func = create_cohere_sql_agent
+                case other:
+                    raise ValueError(other + " is not a valid provider")
 
         self.template = "\n\n".join([system_prompt if system_prompt else "", TEMPLATE])
         self.prompt = PromptTemplate.from_template(template=self.template)
@@ -217,10 +220,9 @@ class NyxLangChain(NyxClient):
     def query(
         self,
         query: str,
-        data: Optional[list[Data]] = None,
+        data: list[Data] | None = None,
         include_own: bool = False,
-        sqlite_file: Optional[str] = None,
-        update_subscribed: bool = True,
+        sqlite_file: str | None = None,
         k: int = 3,
     ) -> str:
         """Query the LLM with a user prompt and context from Nyx.
@@ -243,12 +245,10 @@ class NyxLangChain(NyxClient):
         Note:
             If the data list is not provided, this method updates subscriptions and retrieves all subscribed data.
         """
-        if update_subscribed:
-            self.update_subscriptions()
         if data is None:
-            data = self.get_subscribed_data()
+            data = self.my_subscriptions()
         if include_own:
-            data.extend(self.get_data_for_creators(creators=[self.config.org]))
+            data.extend(self.my_products())
         self.log.debug("using products: %s", [d.title for d in data])
 
         engine = Parser.data_as_db(data, additional_information=None, sqlite_file=sqlite_file, if_exists="replace")
