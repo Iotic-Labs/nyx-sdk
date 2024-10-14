@@ -14,8 +14,8 @@
 
 import logging
 
-from nyx_client.configuration import ConfigProvider, ConfigType
-from nyx_client.extensions.langchain import NyxLangChain
+from nyx_client.configuration import NyxConfigExtended, ConfigType, BaseNyxConfig
+from nyx_extras.langchain import NyxLangChain
 
 
 def main():
@@ -30,7 +30,8 @@ def main():
     environment variable, or it must be passed in explicitly.
     """
     # Supply ConfigType.COHERE to use Cohere LLM instead
-    config = ConfigProvider.create_config(ConfigType.OPENAI, api_key="your_api_key_here")
+    base_config = BaseNyxConfig.from_env()
+    config = NyxConfigExtended(base_config=base_config, provider=ConfigType.COHERE.OPENAI, api_key="your_api_key_here")
     client = NyxLangChain(config=config, log_level=logging.DEBUG)
     while True:
         prompt = input("What is your question? ")
@@ -46,11 +47,10 @@ def custom_data():
     speed up the prompt, by reducing the data, and also prevents the data being downloaded and processed
     automatically, giving you more control.
     """
-    config = ConfigProvider.create_config(ConfigType.OPENAI, api_key="your_api_key_here")
-    client = NyxLangChain(config=config)
+    client = NyxLangChain()
 
     # Get data with the climate category only
-    data = client.get_data_for_categories(["climate"])
+    data = client.get_data(categories=["climate"])
 
     while True:
         prompt = input("What is your question? ")
@@ -64,8 +64,7 @@ def include_own_data():
     """
     This displays how to include your own data, created in Nyx, in the query.
     """
-    config = ConfigProvider.create_config(ConfigType.OPENAI, api_key="your_api_key_here")
-    client = NyxLangChain(config=config)
+    client = NyxLangChain()
 
     while True:
         prompt = input("What is your question? ")
@@ -83,7 +82,9 @@ def custom_openai_llm():
     """
     from langchain_openai import ChatOpenAI
 
-    config = ConfigProvider.create_config(ConfigType.OPENAI)
+    base_config = BaseNyxConfig.from_env()
+    config = NyxConfigExtended(base_config=base_config, provider=ConfigType.OPENAI, api_key="your_api_key_here")
+
     llm = ChatOpenAI(model_name="gpt-4o-mini", api_key=config.api_key)
     client = NyxLangChain(config=config, llm=llm)
 
