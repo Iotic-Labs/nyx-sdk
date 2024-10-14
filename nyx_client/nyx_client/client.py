@@ -17,8 +17,9 @@
 import base64
 import json
 import logging
-from dataclasses import dataclass
 from typing import Any, Dict, Literal, Optional
+
+import importlib.metadata
 
 import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder
@@ -37,7 +38,7 @@ NYX_META_CATEGORIES_ENDPOINT = "meta/categories"
 NYX_META_GENRES_ENDPOINT = "meta/genres"
 NYX_META_CREATORS_ENDPOINT = "meta/creators"
 NYX_META_CONTENT_TYPES_ENDPOINT = "meta/contentTypes"
-NYX_META_LICENSES_ENDPOINT = "meta/licenses"
+NYX_META_LICENSES_ENDPOINT = "meta/licenseURLs"
 NYX_PRODUCTS_ENDPOINT = "products"
 NYX_META_SEARCH_TEXT_ENDPOINT = "meta/search/text"
 NYX_PURCHASES_TRANSACTIONS_ENDPOINT = "purchases/transactions/"
@@ -45,7 +46,6 @@ NYX_PURCHASES_TRANSACTIONS_ENDPOINT = "purchases/transactions/"
 log = logging.getLogger(__name__)
 
 
-@dataclass
 class NyxClient:
     """A client for interacting with the Nyx system.
 
@@ -65,8 +65,8 @@ class NyxClient:
         """Initialize a new NyxClient instance.
 
         Args:
-            env_file (Optional[str]): Path to the environment file containing configuration.
-            config (Optional[BaseNyxConfig]): Pre-configured BaseNyxConfig object.
+            env_file: Path to the environment file containing configuration.
+            config: Pre-configured BaseNyxConfig object.
         """
         if config:
             self.config = config
@@ -77,7 +77,7 @@ class NyxClient:
         self._refresh = ""
 
         self._is_setup = False
-        self._version = "0.2.0"
+        self._version = importlib.metadata.version("nyx-client")
 
     def _setup(self):
         """Set up the client for first contact with API.
@@ -101,7 +101,7 @@ class NyxClient:
         """Authorize with the configured Nyx instance using basic authorization.
 
         Args:
-            refresh (bool): Whether to refresh the token. Defaults to True.
+            refresh: Whether to refresh the token. Defaults to True.
         """
         if not refresh and self._token:
             # If it's not fresh then we'll return and use the existing token
@@ -110,11 +110,15 @@ class NyxClient:
         self._token = resp["access_token"]
         self._refresh = resp["refresh_token"]
 
+    def _common_headers(self) -> Dict:
+        return {"X-Requested-With": "nyx-sdk", "Content-Type": "application/json", "sdk-version": self._version}
+
+
     @ensure_setup
     @auth_retry
     def _nyx_post(
         self, endpoint: str, data: dict, headers: Optional[dict] = None, multipart: Optional[MultipartEncoder] = None
-    ) -> Dict:
+    ):
         """Send a POST request to the Nyx API.
 
         Args:
@@ -130,7 +134,7 @@ class NyxClient:
             requests.HTTPError: If the request fails.
         """
         if not headers:
-            headers = {"X-Requested-With": "nyx-sdk", "Content-Type": "application/json", "sdk-version": self._version}
+            headers = self._common_headers()
 
         headers["authorization"] = "Bearer " + self._token
         resp = requests.post(
@@ -147,7 +151,7 @@ class NyxClient:
     @auth_retry
     def _nyx_patch(
         self, endpoint: str, data: dict, headers: Optional[dict] = None, multipart: Optional[MultipartEncoder] = None
-    ) -> Dict:
+    ):
         """Send a PATCH request to the Nyx API.
 
         Args:
@@ -163,7 +167,7 @@ class NyxClient:
             requests.HTTPError: If the request fails.
         """
         if not headers:
-            headers = {"X-Requested-With": "nyx-sdk", "Content-Type": "application/json", "sdk-version": self._version}
+            headers = self._common_headers()
 
         headers["authorization"] = "Bearer " + self._token
         resp = requests.patch(
@@ -178,7 +182,7 @@ class NyxClient:
 
     @ensure_setup
     @auth_retry
-    def _nyx_get(self, endpoint: str, params: Optional[dict] = None) -> Dict:
+    def _nyx_get(self, endpoint: str, params: Optional[dict] = None):
         """Send a GET request to the Nyx API.
 
         Args:
@@ -191,7 +195,7 @@ class NyxClient:
         Raises:
             requests.HTTPError: If the request fails.
         """
-        headers = {"X-Requested-With": "nyx-sdk", "Content-Type": "application/json", "sdk-version": self._version}
+        headers = self._common_headers()
         if self._token:
             headers["authorization"] = "Bearer " + self._token
         resp = requests.get(url=self.config.nyx_url + NYX_API_BASE_URL + endpoint, headers=headers, params=params)
@@ -336,6 +340,49 @@ class NyxClient:
             for resp in resps
         ]
 
+    def my_subscriptions(
+        self,
+        categories: Optional[list[str]] = None,
+        genre: Optional[str] = None,
+        creator: Optional[str] = None,
+        license: Optional[str] = None,
+        content_type: Optional[str] = None,
+    ) -> list[Data]:
+        """Retrieve only subscribed data from the federated network.
+
+        Args:
+            categories (Optional[list[str]]): List of categories to filter by.
+            genre (Optional[str]): Genre to filter by.
+            creator (Optional[str]): Creator to filter by.
+            license (Optional[str]): License to filter by.
+            content_type (Optional[str]): Content type to filter by.
+
+        Returns:
+            list[Data]: A list of `Data` instances matching the criteria.
+        """
+        return self.get_data(categories, genre, creator, license, content_type, "subscribed")
+    
+    def my_products(
+        self,
+        categories: Optional[list[str]] = None,
+        genre: Optional[str] = None,
+        license: Optional[str] = None,
+        content_type: Optional[str] = None,
+    ) -> list[Data]:
+        """Retrieve products I have created.
+
+        Args:
+            categories (Optional[list[str]]): List of categories to filter by.
+            genre (Optional[str]): Genre to filter by.
+            creator (Optional[str]): Creator to filter by.
+            license (Optional[str]): License to filter by.
+            content_type (Optional[str]): Content type to filter by.
+
+        Returns:
+            list[Data]: A list of `Data` instances matching the criteria.
+        """
+        return self.get_data(categories, genre, self.config.org, license, content_type, "all")
+
     def get_data(
         self,
         categories: Optional[list[str]] = None,
@@ -345,7 +392,7 @@ class NyxClient:
         content_type: Optional[str] = None,
         subscription_state: Literal["subscribed", "all", "not-subscribed"] = "all",
     ) -> list[Data]:
-        """Retrieve subscribed data from the federated network.
+        """Retrieve data from the federated network.
 
         Args:
             categories (Optional[list[str]]): List of categories to filter by.
@@ -409,7 +456,6 @@ class NyxClient:
         )
 
     @ensure_setup
-    @auth_retry
     def create_data(
         self,
         name: str,
@@ -423,8 +469,8 @@ class NyxClient:
         lang: str = "en",
         status: str = "published",
         preview: str = "",
-        price: int = 0,
-        license_url: str = "https://creativecommons.org/publicdomain/zero/1.0/",
+        price: Optional[int] = None,
+        license_url: Optional[str] = None,
     ) -> Data:
         """Create new data in the system.
 
@@ -464,11 +510,13 @@ class NyxClient:
             "status": status,
             "preview": preview_base64_string,
             "downloadURL": download_url,
-            "licenseURL": license_url,
             "contentType": content_type,
         }
-        if price > 0:
+        if price:
             data["price"] = price
+        
+        if license_url:
+            data["licenseURL"] = license_url
 
         multipart_data = MultipartEncoder(
             fields={
@@ -480,24 +528,6 @@ class NyxClient:
 
         resp = self._nyx_post(NYX_PRODUCTS_ENDPOINT, data, headers, multipart_data)
 
-        args = {
-            "name": name,
-            "title": title,
-            "description": description,
-            "org": self.config.org,
-            "mediaType": content_type,
-            "size": size,
-        }
-
-        resp_download_url = resp.get("downloadURL")
-        access_url = resp.get("accessURL")
-
-        if resp_download_url:
-            args["download_url"] = resp_download_url
-
-        if access_url:
-            args["access_url"] = access_url
-
         return Data(
             name=name,
             title=title,
@@ -505,7 +535,7 @@ class NyxClient:
             org=self.config.org,
             content_type=content_type,
             size=size,
-            url=access_url if access_url else resp_download_url,
+            url=resp.get("accessURL", download_url),
             creator=self.config.org,
             categories=resp["categories"],
             genre=resp["genre"],
@@ -525,8 +555,8 @@ class NyxClient:
         lang: str = "en",
         status: str = "published",
         preview: str = "",
-        price: int = 0,
-        license_url: str = "https://creativecommons.org/publicdomain/zero/1.0/",
+        price: Optional[int] = None,
+        license_url: Optional[str] = None,
     ) -> Data:
         """Updates existing data in the system.
 
@@ -565,11 +595,13 @@ class NyxClient:
             "status": status,
             "preview": preview_base64_string,
             "downloadURL": download_url,
-            "licenseURL": license_url,
             "contentType": content_type,
         }
-        if price > 0:
+        if price:
             data["price"] = price
+
+        if license_url:
+            data["licenseURL"] = license_url
 
         multipart_data = MultipartEncoder(
             fields={
@@ -581,24 +613,6 @@ class NyxClient:
 
         resp = self._nyx_patch(f"{NYX_PRODUCTS_ENDPOINT}/{name}", data, headers, multipart_data)
 
-        args = {
-            "name": name,
-            "title": title,
-            "description": description,
-            "org": self.config.org,
-            "mediaType": content_type,
-            "size": size,
-        }
-
-        resp_download_url = resp.get("downloadURL")
-        access_url = resp.get("accessURL")
-
-        if resp_download_url:
-            args["download_url"] = resp_download_url
-
-        if access_url:
-            args["access_url"] = access_url
-
         return Data(
             name=name,
             title=title,
@@ -606,7 +620,7 @@ class NyxClient:
             org=self.config.org,
             content_type=content_type,
             size=size,
-            url=access_url if access_url else resp_download_url,
+            url=resp.get("accessURL", download_url),
             creator=self.config.org,
             categories=resp["categories"],
             genre=resp["genre"],
@@ -624,7 +638,6 @@ class NyxClient:
         self.delete_data_by_name(product.name)
 
     @ensure_setup
-    @auth_retry
     def delete_data_by_name(self, name: str):
         """Delete the data uniquely identified by the provided name from Nyx.
 

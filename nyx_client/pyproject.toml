@@ -29,7 +29,7 @@ documentation = "https://nyx-sdk.readthedocs.io/en/stable"
 "Changes" = "https://github.com/Iotic-Labs/nyx-sdk/blob/main/CHANGELOG.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.10"
 requests-toolbelt = "^1.0.0"
 python-dotenv = "^1.0.1"
 click = "^8.1.7"

@@ -29,18 +29,6 @@ class Data:
     in the Nyx system, including its metadata and content retrieval.
     """
 
-    @property
-    def content_type(self) -> str:
-        """Content type (as a simple string, without IANA prefix)."""
-        if self._content_type.startswith("http"):
-            return self._content_type.split("/")[-1]
-        return self._content_type
-
-    @property
-    def url(self):
-        """The server generated url for brokered access to a subscribed dataset/product."""
-        return self._url + f"?buyer_org={self.org}"
-
     def __init__(
         self,
         name: str,
@@ -76,8 +64,11 @@ class Data:
         self.title = title
         self.description = description
         self.org = org
-        self._url = url
-        self._content_type = content_type
+        self.url = url + f"?buyer_org={self.org}"
+        self.content_type = content_type
+
+        if content_type.startswith("http"):
+            self.content_type = content_type.split("/")[-1]
         self.size = size
         self.creator = creator
         self.categories = categories

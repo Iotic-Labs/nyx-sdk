@@ -23,6 +23,7 @@ def ensure_setup(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
         if not self._is_setup:
+            print("setting up")
             self._setup()
         return func(self, *args, **kwargs)
 

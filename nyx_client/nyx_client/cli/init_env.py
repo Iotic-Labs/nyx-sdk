@@ -74,19 +74,9 @@ def init_env(filename: str = ".env"):
     token = resp.json()["access_token"]
     headers["authorization"] = f"Bearer {token}"
 
-    # Get username
-    resp = requests.get(
-        url + "/api/portal/users/me",
-        headers=headers,
-    )
-    if not resp.ok:
-        raise RuntimeError(f"Unable to retrieve Nyx user details, {resp.text}")
-
-    username = resp.json()["name"]
     secrets = ""
 
     # NYX creds
-    secrets += f'\nNYX_USERNAME="{username}"'
     secrets += f'\nNYX_PASSWORD="{password}"'
     secrets += f'\nNYX_EMAIL="{email}"'
     secrets += f'\nNYX_URL="{url}"'

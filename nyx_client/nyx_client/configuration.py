@@ -41,7 +41,6 @@ class BaseNyxConfig:
     """
 
     required_if_token_empty = [
-        "nyx_username",
         "nyx_email",
         "nyx_password",
     ]
