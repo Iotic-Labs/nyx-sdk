@@ -5,7 +5,7 @@
 [![Version](https://img.shields.io/pypi/v/nyx-extras)](https://pypi.org/project/nyx-extras)
 [![License](https://img.shields.io/badge/License-Apache%202.0-yellow.svg)](https://github.com/Iotic-Labs/nyx-sdk/blob/main/LICENSE)
 [![Build](https://github.com/Iotic-Labs/nyx-sdk/actions/workflows/build.yaml/badge.svg?branch=main)](https://github.com/Iotic-Labs/nyx-sdk/actions/workflows/build.yaml)
-[![Read The Docs](https://readthedocs.org/projects/nyx-sdk/badge/?version=stable)](https://nyx-sdk.readthedocs.io/en/stable)
+[![Read The Docs](https://readthedocs.org/projects/nyx-extras/badge/?version=stable)](https://nyx-extras.readthedocs.io/en/stable)
 [![GitHub Repo stars](https://img.shields.io/github/stars/Iotic-Labs/nyx-sdk)](https://github.com/Iotic-Labs/nyx-sdk)
 [![Discord](https://img.shields.io/discord/1285252646554304555)](https://discord.gg/zS8pVHjqSf)
 
