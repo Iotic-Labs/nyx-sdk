@@ -21,7 +21,7 @@ classifiers = [
 ]
 homepage = "https://www.get-nyx.io"
 repository = "https://github.com/Iotic-Labs/nyx-sdk"
-documentation = "https://nyx-sdk.readthedocs.io/en/stable"
+documentation = "https://nyx-client.readthedocs.io/en/stable"
 
 [tool.poetry.urls]
 "Issue tracker" = "https://github.com/Iotic-Labs/nyx-sdk/issues"

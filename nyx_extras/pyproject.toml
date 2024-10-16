@@ -21,8 +21,8 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License"
 ]
 homepage = "https://www.get-nyx.io"
-repository = "https://github.com/Iotic-Labs/nyx-sdk"
-documentation = "https://nyx-sdk.readthedocs.io/en/stable"
+repository = "https://github.com/Iotic-Labs/nyx-extras"
+documentation = "https://nyx-extras.readthedocs.io/en/stable"
 
 [tool.poetry.urls]
 "Issue tracker" = "https://github.com/Iotic-Labs/nyx-sdk/issues"
