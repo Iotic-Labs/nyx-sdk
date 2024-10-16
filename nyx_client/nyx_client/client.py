@@ -76,6 +76,10 @@ class NyxClient:
         self._refresh = ""
 
         self._is_setup = False
+
+        # If an override token is set, then we do not need to setup
+        if self._token:
+            self._is_setup = True
         self._version = importlib.metadata.version("nyx-client")
 
     def _setup(self):
@@ -84,17 +88,22 @@ class NyxClient:
         This method is automatically called on first contact with the API to ensure the configuration is set.
         It authorizes the client and sets up user and host information.
         """
+        # This is set at the start so API calls don't re-call setup
         self._is_setup = True
-        self._authorise(refresh=False)
+        try:
+            self._authorise(refresh=False)
 
-        # Set user nickname
-        self.name = self._nyx_get(NYX_USERS_ME_ENDPOINT).get("name")
-        log.debug("successful login as %s", self.name)
+            # Set user nickname
+            self.name = self._nyx_get(NYX_USERS_ME_ENDPOINT).get("name")
+            log.debug("successful login as %s", self.name)
 
-        # Get host info
-        qapi = self._nyx_get(NYX_AUTH_QAPI_CONNECTION_ENDPOINT)
-        self.community_mode = qapi.get("community_mode", False)
-        self.org = f"{qapi['org_name']}/{self.name}" if self.community_mode else qapi["org_name"]
+            # Get host info
+            qapi = self._nyx_get(NYX_AUTH_QAPI_CONNECTION_ENDPOINT)
+            self.community_mode = qapi.get("community_mode", False)
+            self.org = f"{qapi['org_name']}/{self.name}" if self.community_mode else qapi["org_name"]
+        except:
+            self._is_setup = False
+            raise
 
     def _authorise(self, refresh=True):
         """Authorize with the configured Nyx instance using basic authorization.
