@@ -13,6 +13,8 @@ If you're looking to contribute, feel free to check out the issues section on Gi
    cd nyx-sdk
    ```
 
+# TODO - setup for either core or both core + extras?
+
 2. Install the package in development mode
    ```shell
    make setup-poetry install

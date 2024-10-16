@@ -644,6 +644,7 @@ class NyxClient:
         """
         self.delete_data_by_name(product.name)
 
+    # TODO - add delete nyx func - only need auth_retry for those then, not public user methods
     @ensure_setup
     @auth_retry
     def delete_data_by_name(self, name: str):
