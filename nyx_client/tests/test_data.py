@@ -15,6 +15,8 @@ def mock_data_details():
         "size": 321,
         "description": "Some description of sorts",
         "creator": "Test Creator",
+        "categories": ["ai"],
+        "genre": "ai",
     }
 
 
@@ -27,14 +29,6 @@ def test_data_initialization(mock_data_details):
     assert data.size == 321
     assert data.creator == "Test Creator"
     assert data.org == "TestOrg"
-
-
-def test_nyx_data_invalid_size(mock_data_details):
-    details = mock_data_details
-    details["size"] = "aaa"
-
-    data = Data(**mock_data_details)
-    assert data.size == 0
 
 
 def test_nyx_data_no_size(mock_data_details):

@@ -30,8 +30,7 @@ def mock_dotenv_values():
 
 @pytest.fixture
 def mock_config():
-    config = BaseNyxConfig(env_file=None, override_token="test_token", validate=False)
-    config.org = "test"
+    config = BaseNyxConfig.from_env(env_file=None, override_token="test_token")
     yield config
 
 
@@ -39,6 +38,7 @@ def mock_config():
 def nyx_client(mock_config):
     with patch("nyx_client.client.NyxClient._setup"):
         client = NyxClient(config=mock_config)
+        client.org = "test"
         yield client
 
 
@@ -78,6 +78,8 @@ def test_delete_data(requests_mock, nyx_client):
         description="",
         content_type="application/poney",
         creator="me",
+        categories=["ai"],
+        genre="ai",
     )
     nyx_client.delete_data(data)
     assert requests_mock.call_count == 1
@@ -105,8 +107,8 @@ def test_authorise_invalid_credentials(nyx_client):
 
 
 def test_get_all_categories_empty_result(nyx_client):
-    with patch.object(nyx_client, "_federated_sparql_query", return_value=[]):
-        result = nyx_client.get_all_categories()
+    with patch.object(nyx_client, "_nyx_get", return_value=[]):
+        result = nyx_client.categories()
         assert result == []
 
 
@@ -173,13 +175,11 @@ def test_delete_data_not_found(requests_mock, nyx_client):
         description="",
         content_type="application/poney",
         creator="me",
+        categories=["ai"],
+        genre="ai",
     )
     with pytest.raises(requests.HTTPError):
         nyx_client.delete_data(data)
-
-
-def test_get_subscribed_datasets_no_subscriptions(nyx_client):
-    assert nyx_client.get_data() == []
 
 
 def test_sparql_query_constructs_data(nyx_client):
@@ -191,11 +191,12 @@ def test_sparql_query_constructs_data(nyx_client):
             "name": "test_data",
             "contentType": "application/json",
             "creator": "TestCreator",
-            "size": "321",
+            "size": 321,
             "description": "Some description of sorts",
+            "categories": ["ai"],
+            "genre": "ai",
         }
     ]
-    nyx_client._subscribed_data = ["test_data"]
 
     # Patch the _sparql_query method to return our mock response
     with patch.object(nyx_client, "_nyx_get", return_value=mock_response):
@@ -207,7 +208,7 @@ def test_sparql_query_constructs_data(nyx_client):
         assert len(data) == 1
 
         # Assert that the Data has the correct attributes
-        assert data[0].url == f"https://example.com/access?buyer_org={nyx_client.config.org}"
+        assert data[0].url == f"https://example.com/access?buyer_org={nyx_client.org}"
         assert data[0].title == "Test Data"
         assert data[0].name == "test_data"
         assert data[0].content_type == "application/json"

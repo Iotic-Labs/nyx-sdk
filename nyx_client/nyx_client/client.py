@@ -232,7 +232,7 @@ class NyxClient:
             headers["authorization"] = "Bearer " + self._token
         resp = requests.delete(url=self.config.nyx_url + NYX_API_BASE_URL + endpoint, headers=headers, params=params)
         resp.raise_for_status()
-        return resp.json()
+        return
 
     @ensure_setup
     @auth_retry
@@ -457,6 +457,7 @@ class NyxClient:
                 url=resp["accessURL"],
                 content_type=resp["contentType"],
                 creator=resp["creator"],
+                size=resp["size"],
                 org=self.org,
                 categories=resp["categories"],
                 genre=resp["genre"],

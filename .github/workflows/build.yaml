@@ -1,3 +1,5 @@
+name: Test nyx_client and nyx_extras
+
 on:
   push:
     branches: [main]
@@ -5,24 +7,32 @@ on:
 
 jobs:
   test:
+    strategy:
+      matrix:
+        project: [nyx_client, nyx_extras]
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ matrix.project }}
     steps:
       - uses: actions/checkout@v2
-
       - uses: actions/setup-python@v2
         with:
           python-version: 3.10.14
-
       - uses: snok/install-poetry@v1
         with:
           version: 1.8.3
           virtualenvs-create: true
           virtualenvs-in-project: true
-
-      - run: poetry install --with dev --extras "langchain-openai langchain-cohere" --no-interaction
+      - name: Install dependencies for nyx_client
+        if: matrix.project == 'nyx_client'
+        run: poetry install --with dev --no-interaction
         env:
           POETRY_INSTALLER_PARALLEL: 0
-
+      - name: Install dependencies for nyx_extras
+        if: matrix.project == 'nyx_extras'
+        run: poetry install --with dev --extras "langchain-openai langchain-cohere" --no-interaction
+        env:
+          POETRY_INSTALLER_PARALLEL: 0
       - run: make lint
-
       - run: make tests

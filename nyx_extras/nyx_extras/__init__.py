@@ -17,4 +17,4 @@
 """NYC client SDK optional extras for langchain and auto-parsing."""
 
 from nyx_extras.langchain import NyxLangChain
-from nyx_extras.utils import Parser, Utils, VectorResult
+from nyx_extras.utils import Metadata, Parser, Utils, VectorResult

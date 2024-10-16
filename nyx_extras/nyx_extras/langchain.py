@@ -64,7 +64,7 @@ from langchain_core.prompts import (
 from nyx_client.client import NyxClient
 from nyx_client.data import Data
 
-from nyx_extras import Parser, Utils
+from nyx_extras.utils import Parser, Utils
 
 EXAMPLES = [
     {

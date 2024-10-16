@@ -1,48 +1,64 @@
+name: Verify and Upload nyx_client and nyx_extras to PyPI
+
 on:
   workflow_dispatch:
 
 jobs:
   verify_and_upload:
+    strategy:
+      matrix:
+        project: [nyx_client, nyx_extras]
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ matrix.project }}
     steps:
       - uses: actions/checkout@v2
-
       - uses: actions/setup-python@v2
         with:
           python-version: 3.10.14
-
       - uses: snok/install-poetry@v1
         with:
           version: 1.8.3
           virtualenvs-create: true
           virtualenvs-in-project: true
-
-      - run: poetry install --with dev --extras "langchain-openai langchain-cohere" --no-interaction
+      - name: Install dependencies for nyx_client
+        if: matrix.project == 'nyx_client'
+        run: poetry install --with dev --no-interaction
         env:
           POETRY_INSTALLER_PARALLEL: 0
-
+      - name: Install dependencies for nyx_extras
+        if: matrix.project == 'nyx_extras'
+        run: poetry install --with dev --extras "langchain-openai langchain-cohere" --no-interaction
+        env:
+          POETRY_INSTALLER_PARALLEL: 0
       - run: make lint
-
       - run: make tests
-
       - run: make build
-
-      - run: |
-          pip install dist/nyx_client*.whl
-          python -c "from nyx_client import NyxClient, Data"
-          pip uninstall -y nyx_client
-
-      - run: |
-          pip install dist/nyx_client*.tar.gz
-          python -c "from nyx_client import NyxClient, Data"
-          pip uninstall -y nyx_client
-
-      - name: Publish package to PyPi
+      - name: Verify wheel installation
+        run: |
+          pip install dist/${{ matrix.project }}*.whl
+          if [ "${{ matrix.project }}" = "nyx_client" ]; then
+            python -c "from nyx_client import NyxClient, Data"
+          else
+            python -c "from nyx_extras import *"
+          fi
+          pip uninstall -y ${{ matrix.project }}
+      - name: Verify tar.gz installation
+        run: |
+          pip install dist/${{ matrix.project }}*.tar.gz
+          if [ "${{ matrix.project }}" = "nyx_client" ]; then
+            python -c "from nyx_client import NyxClient, Data"
+          else
+            python -c "from nyx_extras import *"
+          fi
+          pip uninstall -y ${{ matrix.project }}
+      - name: Publish package to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
           password: ${{ secrets.PYPI_PASSWORD2024 }}
-          packages-dir: ./dist/
+          packages-dir: ${{ matrix.project }}/dist/
           verify-metadata: true
           verbose: true
           skip-existing: false

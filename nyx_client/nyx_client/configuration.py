@@ -25,33 +25,21 @@ from typing import Dict
 from dotenv import dotenv_values
 
 
-@dataclass
+@dataclass(frozen=True)
 class BaseNyxConfig:
     """Configuration for the Nyx client.
 
     Attributes:
-        host_config: Configuration for the host client.
         nyx_url: The URL of the Nyx instance.
         nyx_username: The username of the Nyx user.
         nyx_email: The email of the Nyx user.
         nyx_password: The password of the Nyx user.
-        org: The organisation name.
-        community_mode: Whether the host is in community mode.
     """
 
-    def __init__(self, url: str, email: str, password: str, override_token: str | None = None):
-        """Instantiate a new nyx base configuration.
-
-        Args:
-            url: The URL of the Nyx instance.
-            email: The email of the Nyx user.
-            password: The password of the Nyx user.
-            override_token: Token to override the default authentication.
-        """
-        self.nyx_url = url
-        self.nyx_email = email
-        self.nyx_password = password
-        self.override_token = override_token
+    nyx_url: str
+    nyx_password: str
+    nyx_email: str
+    override_token: str | None
 
     @classmethod
     def from_env(

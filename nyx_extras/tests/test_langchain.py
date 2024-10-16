@@ -3,8 +3,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from langchain_core.language_models import BaseChatModel
-from nyx_client.configuration import BaseNyxConfig
-from nyx_client.extensions.langchain import NyxLangChain
+from nyx_client.configuration import BaseNyxConfig, ConfigType, NyxConfigExtended
+
+from nyx_extras import NyxLangChain
 
 
 @pytest.fixture(autouse=True)
@@ -28,7 +29,8 @@ def mock_dotenv_values():
 
 @pytest.fixture
 def mock_config():
-    return BaseNyxConfig(env_file=None, override_token="test_token", validate=False)
+    base = BaseNyxConfig(email="test", password="test", url="http://localhost:1234")
+    return NyxConfigExtended(base_config=base, provider=ConfigType.OPENAI, api_key="apikey")
 
 
 @pytest.fixture
@@ -37,25 +39,12 @@ def mock_llm():
 
 
 @pytest.fixture
-def mock_host_client():
-    with patch("nyx_client.client.HostClient") as mock:
-        yield mock
-
-
-@pytest.fixture
-def nyx_langchain(mock_config, mock_llm, mock_host_client):
-    with patch("nyx_client.extensions.langchain.NyxClient._setup"):
+def nyx_langchain(mock_config, mock_llm):
+    with patch("nyx_extras.langchain.NyxClient._setup"):
         with patch("nyx_client.client.requests.post"):
             with patch("nyx_client.client.requests.get"):
                 client = NyxLangChain(config=mock_config, llm=mock_llm)
-                client.host_client = mock_host_client
                 return client
-
-
-def test_nyx_langchain_initialization(nyx_langchain, mock_config, mock_llm):
-    assert isinstance(nyx_langchain, NyxLangChain)
-    assert nyx_langchain.config == mock_config
-    assert nyx_langchain.llm == mock_llm
 
 
 @pytest.mark.skip

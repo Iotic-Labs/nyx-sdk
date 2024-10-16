@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nyx-client"
-version = "0.1.4"
+version = "0.2.0"
 description = "Nyx Client SDK provides a powerful toolkit for building generative AI applications using data brokered on the Nyx platform."
 authors = [
     "Iotics <info@iotics.com>",

@@ -3,8 +3,9 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 from nyx_client.data import Data
-from nyx_client.utils import Metadata, Parser, VectorResult
 from sqlalchemy import text
+
+from nyx_extras import Metadata, Parser, VectorResult
 
 
 @pytest.fixture
@@ -37,16 +38,26 @@ def sample_csv_content_2():
 def sample_data():
     return [
         Data(
-            access_url="http://example.com/1",
-            title="Test Data 1",
-            org="TestOrg",
-            mediaType="http://www.iana.org/assignments/media-types/text/csv",
+            url="http://test.com",
+            title="Test data 1",
+            org="test_org",
+            name="testdata1",
+            description="",
+            content_type="csv",
+            creator="me",
+            categories=["ai"],
+            genre="ai",
         ),
         Data(
-            access_url="http://example.com/2",
-            title="Test Data 2",
-            org="TestOrg",
-            mediaType="http://www.iana.org/assignments/media-types/text/csv",
+            url="http://test.com",
+            title="Test data 2",
+            org="test_org",
+            name="testdata2",
+            description="",
+            content_type="csv",
+            creator="me",
+            categories=["ai"],
+            genre="ai",
         ),
     ]
 
@@ -76,15 +87,13 @@ def test_dataset_as_db_with_data(sample_data, sample_csv_content):
             assert "nyx_subscriptions" in table_names, "nyx_subscriptions table should be created"
 
 
-def test_dataset_as_vectors():
+def test_dataset_as_vectors(sample_data):
     parser = Parser()
-    data = [
-        Data(access_url="http://example.com/1", title="Test Data 1", org="TestOrg", mediaType="text/plain"),
-        Data(access_url="http://example.com/2", title="Test Data 2", org="TestOrg", mediaType="text/plain"),
-    ]
+    sample_data[0].content_type = "txt"
+    sample_data[1].content_type = "txt"
 
     with patch.object(Data, "as_string", side_effect=["This is a test content.", "Another test content here."]):
-        parser.data_as_vectors(data, chunk_size=4)
+        parser.data_as_vectors(sample_data, chunk_size=4)
 
         assert parser.vectors is not None
         assert parser.vectorizer is not None
@@ -111,7 +120,7 @@ def test_find_matching_chunk():
         Metadata("Test Data 4", "http://example.com/4", "This is chunk four."),
     ]
 
-    with patch("nyx_client.utils.cosine_similarity", return_value=np.array([[0.5, 0.7, 0.6, 0.8]])):
+    with patch("nyx_extras.utils.cosine_similarity", return_value=np.array([[0.5, 0.7, 0.6, 0.8]])):
         result = parser.find_matching_chunk(MagicMock(), k=3)
         assert len(result.chunks) == 3
         assert result.chunks == ["This is chunk four.", "This is chunk two.", "This is chunk three."]
