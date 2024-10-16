@@ -1,4 +1,4 @@
-nyx-sdk Documentation
+nyx-client Documentation
 =====================
 
 .. toctree::

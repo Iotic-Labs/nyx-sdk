@@ -2,7 +2,7 @@
 
 # Nyx Extras SDK
 
-[![Version](https://img.shields.io/pypi/v/nyx-client)](https://pypi.org/project/nyx-client)
+[![Version](https://img.shields.io/pypi/v/nyx-extras)](https://pypi.org/project/nyx-extras)
 [![License](https://img.shields.io/badge/License-Apache%202.0-yellow.svg)](https://github.com/Iotic-Labs/nyx-sdk/blob/main/LICENSE)
 [![Build](https://github.com/Iotic-Labs/nyx-sdk/actions/workflows/build.yaml/badge.svg?branch=main)](https://github.com/Iotic-Labs/nyx-sdk/actions/workflows/build.yaml)
 [![Read The Docs](https://readthedocs.org/projects/nyx-sdk/badge/?version=stable)](https://nyx-sdk.readthedocs.io/en/stable)
@@ -26,7 +26,7 @@ The Nyx ecosystem is at an early stage of its development, please give us feedba
 
 ## Installation
 
-The Nyx Extras SDK is available on [PyPI](https://pypi.org/project/nyx-client/) and can be installed via `pip` running the following command.
+The Nyx Extras SDK is available on [PyPI](https://pypi.org/project/nyx-extras/) and can be installed via `pip` running the following command.
 
 `pip install nyx-extras[langchain-openai]`
 
@@ -34,4 +34,4 @@ this installs langchain, and openai client (You can always bring your own LLM pr
 
 ## First time set up
 
-See [First time set up](./nyx_client/README.md#first-time-set-up)
+See [First time set up](https://github.com/Iotic-Labs/nyx-sdk/nyx_client/README.md#first-time-set-up)

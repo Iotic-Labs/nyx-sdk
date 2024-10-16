@@ -6,7 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "nyx-sdk"
+project = "nyx-extras"
 copyright = "2024, Iotics"
 author = "Iotics"
 
