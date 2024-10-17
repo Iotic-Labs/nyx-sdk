@@ -181,11 +181,11 @@ class Parser:
                 log.debug("Not adding table for %s as no content was found", d.title)
                 continue
             try:
-                if d.content_type == "csv":
+                if "csv" in d.content_type:
                     content = pd.read_csv(BytesIO(content), on_bad_lines="skip")
                 elif d.content_type in Parser._excel_mimes:
                     content = pd.read_excel(BytesIO(content))
-                elif d.content_type == "json":
+                elif "json" in d.content_type:
                     content = pd.read_json(BytesIO(content))
                 else:
                     log.warning("%s is unsupported type %s", d.title, d.content_type)
