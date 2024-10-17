@@ -50,7 +50,7 @@ def custom_data():
     client = NyxLangChain()
 
     # Get data with the climate category only
-    data = client.get_data(categories=["climate"])
+    data = client.get_data(genre="sdktest1", categories=["ai"]) # Combine multiples
 
     while True:
         prompt = input("What is your question? ")
@@ -82,10 +82,9 @@ def custom_openai_llm():
     """
     from langchain_openai import ChatOpenAI
 
-    base_config = BaseNyxConfig.from_env()
-    config = NyxConfigExtended(base_config=base_config, provider=ConfigType.OPENAI, api_key="your_api_key_here")
+    config = NyxConfigExtended.from_env(provider=ConfigType.OPENAI)
 
-    llm = ChatOpenAI(model_name="gpt-4o-mini", api_key=config.api_key)
+    llm = ChatOpenAI(model="gpt-4o-mini", api_key=config.api_key)
     client = NyxLangChain(config=config, llm=llm)
 
     while True:

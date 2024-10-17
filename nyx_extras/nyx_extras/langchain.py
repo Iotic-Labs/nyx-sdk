@@ -161,7 +161,6 @@ class NyxLangChain(NyxClient):
     def __init__(
         self,
         config: NyxConfigExtended | None = None,
-        env_file: str | None = None,
         llm: BaseChatModel | None = None,
         log_level: int = logging.WARN,
         system_prompt: str | None = None,
@@ -170,14 +169,13 @@ class NyxLangChain(NyxClient):
 
         Args:
             config: Configuration for the Nyx client.
-            env_file: Path to the environment file.
             llm: Language model to use.
             log_level: the logging level to use for nyx client, and langchain modules
             system_prompt: provide an override for the system prompt
         """
         if not config:
-            config = NyxConfigExtended.from_env(provider=ConfigType.OPENAI, env_file=env_file)
-        super().__init__(env_file, config.base_config)
+            config = NyxConfigExtended.from_env(provider=ConfigType.OPENAI)
+        super().__init__(config.base_config)
         logging.basicConfig(format="%(asctime)s %(levelname)s [%(module)s] %(message)s", level=log_level)
 
         # Disable langchain network requests log
