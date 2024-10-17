@@ -142,7 +142,5 @@ class NyxConfigExtended:
                 api_key = os.environ["OPENAI_API_KEY"]
             case ConfigType.COHERE:
                 api_key = os.environ["COHERE_API_KEY"]
-            case other:
-                raise Exception(f"{other} is not a config type")
         base = BaseNyxConfig.from_env(env_file, override_token)
         return NyxConfigExtended(api_key=api_key, provider=provider, base_config=base)

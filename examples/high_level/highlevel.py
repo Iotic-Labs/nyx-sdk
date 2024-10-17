@@ -93,6 +93,27 @@ def custom_openai_llm():
             continue
         print(client.query(prompt, include_own=True))
 
+def custom_llama_llm():
+    """
+    You're not restricted to any LLM provider, you are free to use any of the supported BaseChatModel 
+    (https://python.langchain.com/docs/integrations/chat/)
+
+    In this example we're using groq to run Llama 3.1 70b, but this can also be ran on your own hardware
+    for a totally private RAG!
+    """
+    # pip install langchain-groq
+    from langchain_groq import ChatGroq
+    
+    llm = ChatGroq(model="llama3-groq-70b-8192-tool-use-preview")
+    config = NyxConfigExtended.from_env(provider=ConfigType.BASE)
+
+    client = NyxLangChain(config=config, llm=llm)
+    while True:
+        prompt = input("What is your question? ")
+        if prompt == "":
+            continue
+        print(client.query(prompt, include_own=True))
+
 
 if __name__ == "__main__":
     custom_openai_llm()
