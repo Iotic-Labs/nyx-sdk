@@ -58,19 +58,17 @@ class NyxClient:
 
     def __init__(
         self,
-        env_file: str | None = None,
         config: BaseNyxConfig | None = None,
     ):
         """Initialize a new NyxClient instance.
 
         Args:
-            env_file: Path to the environment file containing configuration.
             config: Pre-configured BaseNyxConfig object.
         """
         if config:
             self.config = config
         else:
-            self.config = BaseNyxConfig.from_env(env_file)
+            self.config = BaseNyxConfig.from_env()
 
         self._token = self.config.override_token
         self._refresh = ""
@@ -152,6 +150,8 @@ class NyxClient:
             data=multipart if multipart else None,
             headers=headers,
         )
+        if resp.status_code == 400:
+            log.warning(resp.json())
         resp.raise_for_status()
 
         return resp.json()
@@ -186,6 +186,8 @@ class NyxClient:
             data=multipart if multipart else None,
             headers=headers,
         )
+        if resp.status_code == 400:
+            log.warning(resp.json())
         resp.raise_for_status()
 
         return resp.json()
@@ -619,6 +621,7 @@ class NyxClient:
 
         data = {
             "title": title,
+            "name": name,
             "description": description,
             "size": size,
             "genre": genre,

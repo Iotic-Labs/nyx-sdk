@@ -72,7 +72,7 @@ class BaseNyxConfig:
             raise OSError("NYX_EMAIL not set in env file")
         if not password:
             raise OSError("NYX_PASSWORD not set in env file")
-        config = BaseNyxConfig(url, email, password, override_token)
+        config = BaseNyxConfig(url, password, email, override_token)
         return config
 
     def __str__(self):
