@@ -17,8 +17,8 @@ import logging
 from langchain_cohere import ChatCohere
 from langchain_openai import ChatOpenAI
 
-from nyx_client.configuration import ConfigProvider, ConfigType
-from nyx_client.extensions.langchain import NyxLangChain
+from nyx_client.configuration import NyxConfigExtended, ConfigType
+from nyx_extras.langchain import NyxLangChain
 
 # The judge prompt that can be updated to more accurately score
 JUDGE_PROMPT = """
@@ -64,14 +64,14 @@ input_prompts = [
 ]
 
 # Configure openAI gpt-4o-mini
-config_openai = ConfigProvider.create_config(ConfigType.OPENAI)
+config_openai = NyxConfigExtended.from_env(provider=ConfigType.OPENAI)
 client_openai_sm = NyxLangChain(config=config_openai, log_level=logging.WARN)
 
 openai_ai = ChatOpenAI(model="gpt-4o")
 client_openai_bg = NyxLangChain(config=config_openai, llm=openai_ai, log_level=logging.WARN)
 
 # Configure cohere cmd-R
-config_cohere = ConfigProvider.create_config(ConfigType.COHERE)
+config_cohere = NyxConfigExtended.from_env(provider=ConfigType.COHERE)
 client_cohere_sm = NyxLangChain(config=config_cohere, log_level=logging.WARN)
 
 cmd_r = ChatCohere(model="command-r-plus")

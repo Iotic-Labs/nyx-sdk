@@ -20,7 +20,8 @@ from langchain_community.agent_toolkits import create_sql_agent
 from langchain_community.utilities import SQLDatabase
 from langchain_openai.chat_models import ChatOpenAI
 
-from nyx_client import NyxClient, Parser, Utils
+from nyx_client import NyxClient
+from nyx_extras import Parser, Utils,
 
 app = Flask(__name__)
 CORS(app)
@@ -52,8 +53,7 @@ def chat():
             }
         else:
             # 4. Otherwise use the LLM to query your subscribed nyx data
-            client.update_subscriptions()
-            data = client.get_subscribed_data()
+            data = client.my_subscriptions()
             # 2. Load them into sql-lite DB in memory
             engine = Parser.data_as_db(data)
 
@@ -73,8 +73,6 @@ def chat():
     except Exception as e:
         log.error("Exception: %s", e.with_traceback(None))
         return '{"message": "Something went wrong, shutting down"}', 500
-    finally:
-        client.close()
 
 
 if __name__ == "__main__":
