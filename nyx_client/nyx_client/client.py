@@ -711,4 +711,5 @@ class NyxClient:
         Raises:
             requests.HTTPError: If the API request fails.
         """
+        # TODO - urlencode path params (ideally using requests lib itself)
         self._nyx_delete(f"{NYX_PURCHASES_TRANSACTIONS_ENDPOINT}/{data.creator}/{data.name}")
