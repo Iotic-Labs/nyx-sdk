@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `NyxClient` is now only initalized with an optional `BaseNyxConfig`, and no-longer takes an `env_file`
 
+- `NyxLangChain` has moved to package `nyx-extras`, and no longer takes an `env_file`
+
+- `Parser` has moved to package `nyx-extras`
+
 ## [0.1.3] - 27/09/2024
 
 - fix: EI-3331 - Bump iotics-identity to 2.1.2 for security [#15](https://github.com/Iotic-Labs/nyx-sdk/pull/15)
