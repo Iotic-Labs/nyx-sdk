@@ -40,7 +40,7 @@ NYX_META_CONTENT_TYPES_ENDPOINT = "meta/contentTypes"
 NYX_META_LICENSES_ENDPOINT = "meta/licenseURLs"
 NYX_PRODUCTS_ENDPOINT = "products"
 NYX_META_SEARCH_TEXT_ENDPOINT = "meta/search/text"
-NYX_PURCHASES_TRANSACTIONS_ENDPOINT = "purchases/transactions/"
+NYX_PURCHASES_TRANSACTIONS_ENDPOINT = "purchases/transactions"
 
 log = logging.getLogger(__name__)
 
