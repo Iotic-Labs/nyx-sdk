@@ -5,6 +5,8 @@ nyx-client Documentation
    :maxdepth: 2
    :caption: Contents:
 
+   changelog
+
 .. include:: ../README.md
    :parser: myst_parser.sphinx_
    :start-line: 1
@@ -13,3 +15,4 @@ nyx-client Documentation
 .. include:: ../README.md
    :parser: myst_parser.sphinx_
    :start-after: </div>
+

@@ -5,6 +5,8 @@ nyx-extras Documentation
    :maxdepth: 2
    :caption: Contents:
 
+   changelog
+
 .. include:: ../README.md
    :parser: myst_parser.sphinx_
    :start-line: 1
