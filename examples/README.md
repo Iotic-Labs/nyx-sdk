@@ -65,6 +65,13 @@ ConfigProvider.create_config(ConfigType.COHERE, api_key="your_api_key_here")
 
 ### [High-level](./high_level)
 
+To run
+
+```shell
+cd examples/high_level
+python highlevel.py
+```
+
 These use additional dependencies for an out-of-the-box experience with minimal integration.
 
 Example | Summary | Notes
@@ -75,6 +82,13 @@ Example | Summary | Notes
 [`highlevel.py::custom_openai_llm()`](./high_level/highlevel.py) | Use a custom model instead of the nyx default one for an LLM. | This also demonstrates how do specify your own [`BaseChatModel`](https://api.python.langchain.com/en/latest/language_models/langchain_core.language_models.chat_models.BaseChatModel.html), i.e. any LLM provider supporting said LangChain interface.
 
 ### [Advanced Usage](./advanced)
+
+e.g. to run the RAG API example:
+
+```shell
+cd examples/advanced/rag_api
+python app.py
+```
 
 These require manual integration with AI or other tools, offering more control over the process.
 

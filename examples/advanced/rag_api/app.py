@@ -18,7 +18,8 @@ from langchain_community.agent_toolkits import create_sql_agent
 from langchain_community.utilities import SQLDatabase
 from langchain_openai import ChatOpenAI
 
-from nyx_client import NyxClient, Parser, Utils
+from nyx_client import NyxClient 
+from nyx_extras import Parser, Utils
 
 app = Flask(__name__)
 CORS(app)
@@ -35,17 +36,15 @@ def chat():
         return 'bad request, body issue: {"query": "the query"} expected', 400
 
     try:
-        # 1. Get your latest subscriptions
-        client.update_subscriptions()
-        # 2. Get all subscribed data from nyx
-        data = client.get_subscribed_data()
-        # 3. Load them into sql-lite DB in memory
+        # 1. Get all subscribed data from nyx
+        data = client.my_subscriptions()
+        # 2. Load them into sql-lite DB in memory
         engine = Parser.data_as_db(data)
 
-        # 4. Build langChain specific tooling from this, and send it a prompt!
+        # 3. Build langChain specific tooling from this, and send it a prompt!
         db = SQLDatabase(engine=engine)
         llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
-        # 5. Create sql agent with new llm model
+        # 4. Create sql agent with new llm model
         agent_executor = create_sql_agent(llm, db=db, agent_type="tool-calling")
         res = agent_executor.invoke({"input": Utils.build_query(prompt)})
 
@@ -57,8 +56,6 @@ def chat():
     except Exception as e:
         log.error("Exception: %s", e.with_traceback(None))
         return '{"message": "Something went wrong, shutting down"}', 500
-    finally:
-        client.close()
 
 
 if __name__ == "__main__":
