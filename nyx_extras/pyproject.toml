@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "nyx-extras"
 version = "0.2.1a0"
-description = "Nyx Client SDK provides a powerful toolkit for building generative AI applications using data brokered on the Nyx platform."
+description = "Nyx Client SDK Extras provides a powerful toolkit for building generative AI applications using data brokered on the Nyx platform."
 authors = [
     "Iotics <info@iotics.com>",
     "Andy Blair <andy.blair@iotics.com>",
@@ -21,7 +21,7 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License"
 ]
 homepage = "https://www.get-nyx.io"
-repository = "https://github.com/Iotic-Labs/nyx-extras"
+repository = "https://github.com/Iotic-Labs/nyx-sdk"
 documentation = "https://nyx-extras.readthedocs.io/en/stable"
 
 [tool.poetry.urls]
@@ -47,7 +47,6 @@ langchain-openai = { version = "^0.2.0", optional = true }
 langchain-cohere = { version = "^0.3.0", optional = true }
 
 [tool.poetry.group.dev.dependencies]
-pdoc = "14.6.0"
 ruff = "^0.5.6"
 pytest = "^8.3.2"
 pytest-mock = "^3.14.0"
