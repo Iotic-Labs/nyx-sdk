@@ -137,7 +137,7 @@ class Parser:
     @staticmethod
     def data_as_db(
         data: List[Data],
-        additional_information: VectorResult = None,
+        additional_information: VectorResult | None = None,
         sqlite_file: Optional[str] = None,
         if_exists: Literal["fail", "replace", "append"] = "replace",
     ) -> "engine.Engine":

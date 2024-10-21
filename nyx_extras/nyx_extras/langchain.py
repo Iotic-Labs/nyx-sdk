@@ -81,7 +81,7 @@ Follow these steps:
 
 Identify the relevant tables to query by examining the nyx_subscriptions table, which contains information about
 each file (table) in the database, including the name, url, description, and table_name.
-If the question is related to available products, subscriptions, or data, respond with a list of all entries from the
+If the question is related to available data or subscriptions, respond with a list of all entries from the
 nyx_subscriptions table, including the name, description, and url for each entry. Do not filter or limit the results
 for these specific queries. Other questions about Nyx that are not related to subscriptions, or any questions about
 subscriptions that are not related to nyx, you should reference other tables.
@@ -230,7 +230,7 @@ class NyxLangChain(NyxClient):
 
         Args:
             query (str): The user input.
-            data (Optional[list[Data]], optional): List of products to use for context.
+            data (Optional[list[Data]], optional): List of data to use for context.
                 If None, uses all subscribed data. Defaults to None.
             include_own (bool): Include your own data, created in Nyx, in the query.
             sqlite_file (Optional[str]): A file location to write the sql_lite file to.
@@ -246,7 +246,7 @@ class NyxLangChain(NyxClient):
         if data is None:
             data = self.my_subscriptions()
         if include_own:
-            data.extend(self.my_products())
+            data.extend(self.my_data())
         self.log.debug("using products: %s", [d.title for d in data])
 
         engine = Parser.data_as_db(data, additional_information=None, sqlite_file=sqlite_file, if_exists="replace")

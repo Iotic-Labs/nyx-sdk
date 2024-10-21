@@ -18,6 +18,7 @@ import base64
 import importlib.metadata
 import json
 import logging
+from collections.abc import Sequence
 from typing import Any, Dict, Literal
 
 import requests
@@ -321,7 +322,7 @@ class NyxClient:
 
     def search(
         self,
-        categories: list[str] | None = None,
+        categories: Sequence[str] = (),
         genre: str | None = None,
         creator: str | None = None,
         text: str | None = None,
@@ -333,7 +334,7 @@ class NyxClient:
         """Search for new data in the Nyx system.
 
         Args:
-            categories: List of categories to filter by.
+            categories: Sequence of categories to filter by.
             genre: Genre to filter by.
             creator: Creator to filter by.
             text: Text to search for.
@@ -379,7 +380,7 @@ class NyxClient:
 
     def my_subscriptions(
         self,
-        categories: list[str] | None = None,
+        categories: Sequence[str] = (),
         genre: str | None = None,
         creator: str | None = None,
         license: str | None = None,
@@ -388,7 +389,7 @@ class NyxClient:
         """Retrieve only subscribed data from the federated network.
 
         Args:
-            categories: List of categories to filter by.
+            categories: Sequence of categories to filter by.
             genre: Genre to filter by.
             creator: Creator to filter by.
             license: License to filter by.
@@ -399,17 +400,17 @@ class NyxClient:
         """
         return self.get_data(categories, genre, creator, license, content_type, "subscribed")
 
-    def my_products(
+    def my_data(
         self,
-        categories: list[str] | None = None,
+        categories: Sequence[str] = (),
         genre: str | None = None,
         license: str | None = None,
         content_type: str | None = None,
     ) -> list[Data]:
-        """Retrieve products I have created.
+        """Retrieve data I have created.
 
         Args:
-            categories: List of categories to filter by.
+            categories: Sequence of categories to filter by.
             genre: Genre to filter by.
             license: License to filter by.
             content_type: Content type to filter by.
@@ -421,7 +422,7 @@ class NyxClient:
 
     def get_data(
         self,
-        categories: list[str] | None = None,
+        categories: Sequence[str] = (),
         genre: str | None = None,
         creator: str | None = None,
         license: str | None = None,
@@ -431,7 +432,7 @@ class NyxClient:
         """Retrieve data from the federated network.
 
         Args:
-            categories: List of categories to filter by.
+            categories: Sequence of categories to filter by.
             genre: Genre to filter by.
             creator: Creator to filter by.
             license: License to filter by.
@@ -470,29 +471,6 @@ class NyxClient:
             for resp in resps
         ]
 
-    def get_data_by_name(self, name: str) -> Data:
-        """Retrieve a data based on its unique name.
-
-        Args:
-            name: The data unique name.
-
-        Returns:
-            The `Data` instance identified with the provided name.
-        """
-        raise NotImplementedError()
-        resp = self._nyx_get(f"{NYX_PRODUCTS_ENDPOINT}/{name}")
-        return Data(
-            name=resp["name"],
-            title=resp["title"],
-            description=resp["description"],
-            url=resp["accessURL"],
-            content_type=resp["contentType"],
-            creator=resp["creator"],
-            org=self.org,
-            categories=resp["categories"],
-            genre=resp["genre"],
-        )
-
     @ensure_setup
     def create_data(
         self,
@@ -501,7 +479,7 @@ class NyxClient:
         description: str,
         size: int,
         genre: str,
-        categories: list[str],
+        categories: Sequence[str],
         download_url: str,
         content_type: str,
         lang: str = "en",
@@ -587,7 +565,7 @@ class NyxClient:
         description: str,
         size: int,
         genre: str,
-        categories: list[str],
+        categories: Sequence[str],
         download_url: str,
         content_type: str,
         lang: str = "en",
@@ -665,16 +643,16 @@ class NyxClient:
             genre=resp["genre"],
         )
 
-    def delete_data(self, product: Data):
+    def delete_data(self, data: Data):
         """Delete the provided data from Nyx.
 
         Args:
-            product: The data to delete.
+            data: The data to delete.
 
         Raises:
             requests.HTTPError: If the API request fails.
         """
-        self.delete_data_by_name(product.name)
+        self.delete_data_by_name(data.name)
 
     @ensure_setup
     def delete_data_by_name(self, name: str):

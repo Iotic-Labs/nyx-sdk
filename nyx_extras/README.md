@@ -34,4 +34,4 @@ this installs langchain, and openai client (You can always bring your own LLM pr
 
 ## First time set up
 
-See [First time set up](https://github.com/Iotic-Labs/nyx-sdk/nyx_client/README.md#first-time-set-up)
+See [First time set up](https://github.com/Iotic-Labs/nyx-sdk/blob/main/nyx_client/README.md#first-time-set-up)
