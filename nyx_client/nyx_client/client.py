@@ -52,6 +52,9 @@ class NyxClient:
 
     Attributes:
         config: Configuration for the Nyx client.
+        org: Your organization name on Nyx.
+        name: Your Nyx Username.
+        community_mode: If you're using community mode.
     """
 
     config: BaseNyxConfig
@@ -80,6 +83,10 @@ class NyxClient:
             self._is_setup = True
         self._version = importlib.metadata.version("nyx-client")
 
+        # Empty variable names
+        self.org, self.name = ""
+        self.community_mode = False
+
     def _setup(self):
         """Set up the client for first contact with API.
 
@@ -88,20 +95,16 @@ class NyxClient:
         """
         # This is set at the start so API calls don't re-call setup
         self._is_setup = True
-        try:
-            self._authorise(refresh=False)
+        self._authorise(refresh=False)
 
-            # Set user nickname
-            self.name = self._nyx_get(NYX_USERS_ME_ENDPOINT).get("name")
-            log.debug("successful login as %s", self.name)
+        # Set user nickname
+        self.name = self._nyx_get(NYX_USERS_ME_ENDPOINT).get("name")
+        log.debug("successful login as %s", self.name)
 
-            # Get host info
-            qapi = self._nyx_get(NYX_AUTH_QAPI_CONNECTION_ENDPOINT)
-            self.community_mode = qapi.get("community_mode", False)
-            self.org = f"{qapi['org_name']}/{self.name}" if self.community_mode else qapi["org_name"]
-        except:
-            self._is_setup = False
-            raise
+        # Get host info
+        qapi = self._nyx_get(NYX_AUTH_QAPI_CONNECTION_ENDPOINT)
+        self.community_mode = qapi.get("community_mode", False)
+        self.org = f"{qapi['org_name']}/{self.name}" if self.community_mode else qapi["org_name"]
 
     def _authorise(self, refresh=True):
         """Authorize with the configured Nyx instance using basic authorization.
