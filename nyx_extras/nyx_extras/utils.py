@@ -18,8 +18,9 @@ import json
 import logging
 import os
 import sqlite3
+from collections.abc import Sequence
 from io import BytesIO
-from typing import Any, List, Literal, Optional
+from typing import Any, Literal
 
 import pandas as pd
 from nyx_client.data import Data
@@ -45,7 +46,7 @@ class Metadata:  # noqa: D101
 
 class VectorResult:  # noqa: D101
     def __init__(  # noqa: D107
-        self, chunks: List[str], metadata: List[Metadata], similarities: List[float], success: bool, message: str = ""
+        self, chunks: list[str], metadata: list[Metadata], similarities: list[float], success: bool, message: str = ""
     ):
         self.chunks = chunks
         self.metadata = metadata
@@ -136,9 +137,9 @@ class Parser:
 
     @staticmethod
     def data_as_db(
-        data: List[Data],
+        data: list[Data],
         additional_information: VectorResult | None = None,
-        sqlite_file: Optional[str] = None,
+        sqlite_file: str | None = None,
         if_exists: Literal["fail", "replace", "append"] = "replace",
     ) -> "engine.Engine":
         """Process the content of multiple Data instances into an in-memory SQLite database.
@@ -225,14 +226,14 @@ class Parser:
         return db_engine
 
     @staticmethod
-    def normalise_values(values: List[str]) -> List[str]:
+    def normalise_values(values: Sequence[str]) -> list[str]:
         """Normalise names in a list of values.
 
         Args:
-            values (List[str]): A list of values to normalise.
+            values: A sequence of values to normalise.
 
         Returns:
-            List[str]: A list of normalised values.
+            A list of normalised values.
         """
         return [
             value.lower().replace(" ", "_").replace(".", "_").replace("-", "_").replace("(", "_").replace(")", "_")
@@ -240,18 +241,18 @@ class Parser:
             if value
         ]
 
-    def data_as_vectors(self, data: List[Data], chunk_size: int = 1000):
+    def data_as_vectors(self, data: Sequence[Data], chunk_size: int = 1000):
         """Process the content of multiple Data instances into vector representations.
 
         This method downloads the content of each Data, combines it, chunks it,
         and creates a TF-IDF vectorizer for the chunks.
 
         Args:
-            data (List[Data]): A list of Data instances to process.
-            chunk_size (int, optional): The size of each chunk when splitting the content. Defaults to 1000.
+            data: A sequence of Data instances to process.
+            chunk_size: The size of each chunk when splitting the content. Defaults to 1000.
 
         Returns:
-            Parser: The current Parser instance with updated vectors, vectorizer, and chunks.
+            The current Parser instance with updated vectors, vectorizer, and chunks.
 
         Note:
             If no content is found in any of the data, the method returns without processing.
@@ -285,13 +286,12 @@ class Parser:
         and then finds the most similar chunks to this query vector.
 
         Args:
-            text (str): The query text to search for in the processed data.
-            k (int, optional): The number of top matching chunks to return. Defaults to 3.
+            text: The query text to search for in the processed data.
+            k: The number of top matching chunks to return. Defaults to 3.
 
         Returns:
-            VectorResult: An object containing the top k matching chunks, their similarities,
-                          and associated metadata. If the vectorizer is not initialized,
-                          it returns a VectorResult indicating failure.
+            An object containing the top k matching chunks, their similarities, and associated metadata. If the
+            vectorizer is not initialized, it returns a VectorResult indicating failure.
 
         Note:
             This method assumes that self.vectorizer has been properly initialized.
@@ -315,13 +315,12 @@ class Parser:
         then returns the top k most similar chunks along with their similarities and metadata.
 
         Args:
-            query_vector (Any): The vector representation of the query.
-            k (int, optional): The number of top matching chunks to return. Defaults to 3.
+            query_vector: The vector representation of the query.
+            k: The number of top matching chunks to return. Defaults to 3.
 
         Returns:
-            VectorResult: An object containing the top k matching chunks, their similarities,
-                          and associated metadata. If no vectors are available, it returns
-                          a VectorResult with empty lists and a failure message.
+            An object containing the top k matching chunks, their similarities, and associated metadata. If no vectors
+            are available, it returns a VectorResult with empty lists and a failure message.
 
         Note:
             This method assumes that self.vectors, self.chunks, and self.metadata have been
@@ -352,6 +351,6 @@ class Parser:
         )
 
     @staticmethod
-    def _chunk_text(text: str, chunk_size: int) -> List[str]:
+    def _chunk_text(text: str, chunk_size: int) -> list[str]:
         words = text.split()
         return [" ".join(words[i : i + chunk_size]) for i in range(0, len(words), chunk_size)]

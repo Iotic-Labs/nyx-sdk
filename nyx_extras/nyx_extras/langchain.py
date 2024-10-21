@@ -16,6 +16,7 @@
 
 import logging
 import os
+from collections.abc import Sequence
 
 from nyx_client.configuration import ConfigType, NyxConfigExtended
 
@@ -218,10 +219,9 @@ class NyxLangChain(NyxClient):
     def query(
         self,
         query: str,
-        data: list[Data] | None = None,
+        data: Sequence[Data] | None = None,
         include_own: bool = False,
         sqlite_file: str | None = None,
-        k: int = 3,
     ) -> str:
         """Query the LLM with a user prompt and context from Nyx.
 
@@ -229,16 +229,14 @@ class NyxLangChain(NyxClient):
         using context from Nyx.
 
         Args:
-            query (str): The user input.
-            data (Optional[list[Data]], optional): List of data to use for context.
-                If None, uses all subscribed data. Defaults to None.
-            include_own (bool): Include your own data, created in Nyx, in the query.
-            sqlite_file (Optional[str]): A file location to write the sql_lite file to.
-            update_subscribed (bool): if set to true this will re-poll Nyx for subscribed data
-            k (int): Max number of vector matches to include
+            query: The user input.
+            data: Sequence of data to use for context. If not specified, uses all subscribed data.
+            include_own: Include your own data, created in Nyx, in the query.
+            sqlite_file: A file location to write the sql_lite file to.
+            update_subscribed): if set to true this will re-poll Nyx for subscribed data
 
         Returns:
-            str: The answer from the LLM.
+            The answer from the LLM.
 
         Note:
             If the data list is not provided, this method updates subscriptions and retrieves all subscribed data.
@@ -246,8 +244,8 @@ class NyxLangChain(NyxClient):
         if data is None:
             data = self.my_subscriptions()
         if include_own:
-            data.extend(self.my_data())
-        self.log.debug("using products: %s", [d.title for d in data])
+            (data := list(data)).extend(self.my_data())
+        self.log.debug("Using data: %s", [d.title for d in data])
 
         engine = Parser.data_as_db(data, additional_information=None, sqlite_file=sqlite_file, if_exists="replace")
         db = SQLDatabase(engine=engine, sample_rows_in_table_info=0)

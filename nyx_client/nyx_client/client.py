@@ -19,7 +19,7 @@ import importlib.metadata
 import json
 import logging
 from collections.abc import Sequence
-from typing import Any, Dict, Literal
+from typing import Any, Literal
 
 import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder
@@ -120,7 +120,7 @@ class NyxClient:
         self._token = resp["access_token"]
         self._refresh = resp["refresh_token"]
 
-    def _common_headers(self) -> Dict:
+    def _common_headers(self) -> dict:
         """Return common headers for API requests."""
         return {"X-Requested-With": "nyx-sdk", "Content-Type": "application/json", "sdk-version": self._version}
 
@@ -242,7 +242,7 @@ class NyxClient:
 
     @ensure_setup
     @auth_retry
-    def _sparql_query(self, query: str, scope: Literal["local", "global"]) -> list[Dict[str, str]]:
+    def _sparql_query(self, query: str, scope: Literal["local", "global"]) -> list[dict[str, str]]:
         """Execute a SPARQL query and process the results.
 
         Args:

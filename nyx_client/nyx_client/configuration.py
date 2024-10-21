@@ -20,7 +20,6 @@ import enum
 import json
 import os
 from dataclasses import dataclass
-from typing import Dict
 
 from dotenv import dotenv_values
 
@@ -61,7 +60,7 @@ class BaseNyxConfig:
         """
         # Load from .env, note env vars will not be overwritten
         # If no env file supplied dotenv will traverse up the directory tree looking for a .env file
-        vals: Dict[str, str | None] = dotenv_values(dotenv_path=env_file if env_file else None)
+        vals = dotenv_values(dotenv_path=env_file if env_file else None)
         url = vals.get("NYX_URL", "https://nyx-playground.iotics.space")
         email = vals.get("NYX_EMAIL")
         password = vals.get("NYX_PASSWORD")
