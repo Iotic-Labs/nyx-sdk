@@ -18,7 +18,7 @@ import base64
 import importlib.metadata
 import json
 import logging
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Dict, Literal
 
 import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder
@@ -467,15 +467,16 @@ class NyxClient:
             for resp in resps
         ]
 
-    def get_data_by_name(self, name: str) -> Optional[Data]:
+    def get_data_by_name(self, name: str) -> Data:
         """Retrieve a data based on its unique name.
 
         Args:
             name: The data unique name.
 
         Returns:
-            The `Data` instance identified with the provided name or None if it does not exist.
+            The `Data` instance identified with the provided name.
         """
+        raise NotImplementedError()
         resp = self._nyx_get(f"{NYX_PRODUCTS_ENDPOINT}/{name}")
         return Data(
             name=resp["name"],
