@@ -46,9 +46,9 @@ export OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
 ```
 or
 ```python
-from nyx_client.configuration import ConfigProvider, ConfigType
+from nyx_client import NyxConfigExtended, ConfigType, BaseNyxConfig
 
-ConfigProvider.create_config(ConfigType.OPENAI, api_key="your_api_key_here")
+config = NyxConfigExtended(api_key="", provider=ConfigType.OPENAI, base_config=BaseNyxConfig.from_env())
 ```
 or if using Cohere
 ```shell
@@ -56,10 +56,12 @@ export COHERE_API_KEY=<YOUR_COHERE_API_KEY>
 ```
 or
 ```python
-from nyx_client.configuration import ConfigProvider, ConfigType
+from nyx_client import NyxConfigExtended, ConfigType, BaseNyxConfig
 
-ConfigProvider.create_config(ConfigType.COHERE, api_key="your_api_key_here")
+config = NyxConfigExtended(api_key="", provider=ConfigType.COHERE, base_config=BaseNyxConfig.from_env())
 ```
+
+The `NyxConfigExtended` instance can then be used with the `NyxLangChain` client.
 
 ## 🎓 Examples
 
