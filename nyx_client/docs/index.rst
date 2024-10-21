@@ -1,5 +1,5 @@
 nyx-client Documentation
-=====================
+========================
 
 .. toctree::
    :maxdepth: 2
@@ -15,4 +15,3 @@ nyx-client Documentation
 .. include:: ../README.md
    :parser: myst_parser.sphinx_
    :start-after: </div>
-
