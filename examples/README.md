@@ -30,11 +30,11 @@ pip install -r requirements.txt
 
 This will install core functionality to interact with Nyx, as well as some support for auto-vectorization, and conversion of CSV products from Nyx into an [SQLite](https://www.sqlite.org/) DB that can be handled by an AI. It's designed to support advanced usage where you will integrate results from Nyx yourself.
 
-To only install the core of the client with `pip install nyx_client` if you're planning on advanced usage. See [Nyx SDK](../README.sdk.md).
+To only install the core of the client with `pip install nyx_client` if you're planning on advanced usage. See [Nyx SDK](../nyx_client/README.md).
 
 ## ⚙️ Configuration
 
-See [First time set up](../README.sdk.md#First-time-set-up) on how to generate initial configuration to communicate with your nyx instance.
+See [First time set up](../nyx_client/README.md#First-time-set-up) on how to generate initial configuration to communicate with your nyx instance.
 
 ### 🔐 API Keys
 
@@ -139,13 +139,13 @@ jupyter lab
 
 ## 👉 Gotchas
 
-See [SDK readme section](../README.sdk.md#-gotchas)
+See [SDK readme section](../nyx_client/README.md#-gotchas)
 
 ## 🐞 Troubleshooting
 
-If you encounter any issues, we'd [love to hear from you](../README.sdk.md#-troubleshooting)
+If you encounter any issues, we'd [love to hear from you](../nyx_client/README.md#-troubleshooting)
 
 
 ## 🤝 Contributing
 
-See [SDK readme section](../README.sdk.md#-contributing).
+See [SDK readme section](../nyx_client/README.md#-contributing).

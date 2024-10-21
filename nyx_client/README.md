@@ -10,10 +10,10 @@
 [![Discord](https://img.shields.io/discord/1285252646554304555)](https://discord.gg/zS8pVHjqSf)
 
 
-🌟 **Nyx Client SDK** offers a simple API for interacting with data in your Nyx network. Subscribe, search and download data from across your federated network with 
-ease, or if you're a publisher, easily created, update, or delete your existing data products programatically!
+🌟 **Nyx Client SDK** offers a simple API for interacting with data in your Nyx network. Subscribe, search and download data from across your federated network with
+ease, or if you're a publisher, easily created, update, or delete your existing data products programmatically!
 
-If you're looking for an out of the box experience, try installing [Nyx-extras](https://github.com/Iotic-Labs/nyx-sdk/tree/main/nyx_extras), to seemlessly and quickly
+If you're looking for an out of the box experience, try installing [nyx-extras](https://github.com/Iotic-Labs/nyx-sdk/tree/main/nyx_extras), to seamlessly and quickly
 build powerful AI applications, to interact with data from your Nyx network!
 
 [![https://iotics.com](https://img.shields.io/badge/Powered%20by-Iotics-blue)](https://iotics.com)
@@ -97,8 +97,8 @@ client.delete_data_by_name(name="MyData1")
 from nyx_client import NyxClient
 
 client = NyxClient()
-subscribed_data = client.get_subscribed_data()
-for data in subscribed_data:
+found_data = client.get_data(categories[genre="ai", categories=["cat1", "cat"], content_type="text/csv"])
+for data in found_data:
   client.subscribe(data)
 ```
 
@@ -108,10 +108,10 @@ for data in subscribed_data:
 from nyx_client import NyxClient
 
 client = NyxClient()
-subscribed_data = client.get_data()
+subscribed_data = client.my_subscriptions()
 for data in subscribed_data:
   print(f"Downloading data {data.name}")
-  content = data.as_string() # Note if binary file use as_bytes to get content as bytes
+  content = data.as_string() # NOTE: If this is a binary file, use as_bytes() instead.
 ```
 
 ## 👉 Gotchas
@@ -120,7 +120,7 @@ for data in subscribed_data:
 
 The Nyx ecosystem is at an early stage of its development, please give us feedback through [Github issues](https://github.com/Iotic-Labs/nyx-sdk/issues).
 
-- If you get the SSL error 
+- If you get the SSL error
 `httpcore.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate`
 
 then it may be that you need to set some environment variables like this before running your script:
@@ -140,7 +140,7 @@ If you encounter any issues, ensure that:
 - If an issue persists, check the Issues section on github
 
 For further assistance:
-- Refer to the [project documentation](https://nyx-sdk.readthedocs.io/en/stable)
+- Refer to the [project documentation](https://nyx-client.readthedocs.io/en/stable)
   - 💡 If you have cloned the Git repo, you can run `make docs` and then view `docs/index.html`.
 - [Raise an issue](https://github.com/Iotic-Labs/nyx-sdk/issues) on GitHub
 - [Chat with us](https://discord.gg/zS8pVHjqSf) on Discord [![Discord](https://img.shields.io/discord/1285252646554304555)](https://discord.gg/zS8pVHjqSf)
