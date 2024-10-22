@@ -1,28 +1,51 @@
+name: Test nyx_client and nyx_extras
 on:
   push:
     branches: [main]
   pull_request:
-
 jobs:
   test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nyx_client
     steps:
       - uses: actions/checkout@v2
-
       - uses: actions/setup-python@v2
         with:
           python-version: 3.10.14
-
       - uses: snok/install-poetry@v1
         with:
           version: 1.8.3
           virtualenvs-create: true
           virtualenvs-in-project: true
-
-      - run: poetry install --with dev --extras "langchain-openai langchain-cohere" --no-interaction
+      - name: Install dependencies for nyx_client
+        run: poetry install --with dev --no-interaction
         env:
           POETRY_INSTALLER_PARALLEL: 0
-
       - run: make lint
-
       - run: make tests
+  
+  test-extras:
+    name: Test Nyx Extras
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nyx_extras
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.10.14
+      - uses: snok/install-poetry@v1
+        with:
+          version: 1.8.3
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+      - name: Install dependencies for nyx_extras
+        run: poetry install --with dev --extras "langchain-openai langchain-cohere" --no-interaction
+        env:
+          POETRY_INSTALLER_PARALLEL: 0
+      - run: make lint
+      - run: make tests
+
