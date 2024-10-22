@@ -31,7 +31,7 @@ documentation = "https://nyx-extras.readthedocs.io/en/stable"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-nyx-client = "^0.2.0"
+nyx-client = "0.2.1a0"
 scipy = "^1.14.0"
 numpy = "^1.26.4"
 pandas = "^2.2.2"
