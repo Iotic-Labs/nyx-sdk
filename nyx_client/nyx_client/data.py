@@ -15,14 +15,12 @@
 """Module that manages individual Nyx Data."""
 
 import logging
-from dataclasses import dataclass
 
 import requests
 
 log = logging.getLogger(__name__)
 
 
-@dataclass
 class Data:
     """Represents the data in the Nyx system.
 
@@ -77,10 +75,6 @@ class Data:
         """Return a string representation of the Data instance."""
         return f"Data({self.title}, {self.url}, {self.content_type})"
 
-    def __repr__(self) -> str:
-        """Return a string representation of the Data instance."""
-        return self.__str__()
-
     def as_string(self) -> str | None:
         """Download the content of the data as a string.
 
@@ -100,6 +94,7 @@ class Data:
                 self.title,
                 ex,
             )
+            return None
 
     def as_bytes(self) -> bytes | None:
         """Download the content of the data as bytes.
@@ -120,3 +115,4 @@ class Data:
                 self.title,
                 ex,
             )
+            return None

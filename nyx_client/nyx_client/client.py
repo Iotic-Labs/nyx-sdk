@@ -238,7 +238,6 @@ class NyxClient:
             headers["authorization"] = "Bearer " + self._token
         resp = requests.delete(url=self.config.nyx_url + NYX_API_BASE_URL + endpoint, headers=headers, params=params)
         resp.raise_for_status()
-        return
 
     @ensure_setup
     @auth_retry
@@ -322,6 +321,7 @@ class NyxClient:
 
     def search(
         self,
+        *,
         categories: Sequence[str] = (),
         genre: str | None = None,
         creator: str | None = None,
@@ -380,6 +380,7 @@ class NyxClient:
 
     def my_subscriptions(
         self,
+        *,
         categories: Sequence[str] = (),
         genre: str | None = None,
         creator: str | None = None,
@@ -398,7 +399,14 @@ class NyxClient:
         Returns:
             A list of `Data` instances matching the criteria.
         """
-        return self.get_data(categories, genre, creator, license, content_type, "subscribed")
+        return self.get_data(
+            categories=categories,
+            genre=genre,
+            creator=creator,
+            license=license,
+            content_type=content_type,
+            subscription_state="subscribed",
+        )
 
     def my_data(
         self,
@@ -418,16 +426,26 @@ class NyxClient:
         Returns:
             A list of `Data` instances matching the criteria.
         """
-        return self.get_data(categories, genre, self.org, license, content_type, "all")
+        return self.get_data(
+            categories=categories,
+            genre=genre,
+            creator=self.org,
+            license=license,
+            content_type=content_type,
+            subscription_state="all",
+            scope="local",
+        )
 
     def get_data(
         self,
+        *,
         categories: Sequence[str] = (),
         genre: str | None = None,
         creator: str | None = None,
         license: str | None = None,
         content_type: str | None = None,
         subscription_state: Literal["subscribed", "all", "not-subscribed"] = "all",
+        scope: Literal["local", "global"] = "global",
     ) -> list[Data]:
         """Retrieve data from the federated network.
 
@@ -438,11 +456,13 @@ class NyxClient:
             license: License to filter by.
             content_type: Content type to filter by.
             subscription_state: Subscription state to filter by.
+            scope: The scope of the lookup. Use "global" (the default) to interrogate the whole Nyx network or "local"
+                to only consider data defined in the local Nyx instance.
 
         Returns:
             A list of `Data` instances matching the criteria.
         """
-        params: dict[str, Any] = {"include": subscription_state, "timeout": 10, "scope": "global"}
+        params: dict[str, Any] = {"include": subscription_state, "timeout": 10, "scope": scope}
         if categories:
             params["category"] = categories
         if genre:
