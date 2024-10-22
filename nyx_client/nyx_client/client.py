@@ -181,7 +181,9 @@ class NyxClient:
             url=self.config.nyx_url + NYX_API_BASE_URL + endpoint,
             json=data if data else None,
             data=multipart if multipart else None,
-            headers=self._make_headers(headers),
+            headers=self._make_headers(
+                content_type="multipart/form-data" if multipart else "application/json", extra_headers=headers
+            ),
         )
         if resp.status_code == 400:
             log.warning(resp.json())
