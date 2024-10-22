@@ -1,4 +1,4 @@
-name: TEST Verify and Upload nyx_client and nyx_extras to PyPI
+name: TestPyPi Verify and Upload
 on:
   workflow_dispatch:
 jobs:
@@ -43,7 +43,7 @@ jobs:
           verify-metadata: true
           verbose: true
           skip-existing: false
-  
+
   verify_and_upload_extras:
     runs-on: ubuntu-latest
     defaults:

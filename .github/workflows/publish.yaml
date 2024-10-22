@@ -1,7 +1,7 @@
 permissions:
   id-token: write
 
-name: Verify and Upload nyx_client and nyx_extras to PyPI
+name: Verify and Upload
 on:
   workflow_dispatch:
 jobs:
@@ -45,7 +45,7 @@ jobs:
           verify-metadata: true
           verbose: true
           skip-existing: false
-  
+
   verify_and_upload_extras:
     runs-on: ubuntu-latest
     defaults:
