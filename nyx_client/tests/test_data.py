@@ -48,7 +48,7 @@ def test_data_str(mock_data_details):
     assert str(data) == "Data(Test Data, http://example.com?buyer_org=TestOrg, text/csv)"
 
 
-def test_data_download(requests_mock, mock_data_details):
+def test_data_as_str(requests_mock, mock_data_details):
     data = Data(**mock_data_details)
 
     requests_mock.get(data.url, text="Test Content")
@@ -56,6 +56,13 @@ def test_data_download(requests_mock, mock_data_details):
     content = data.as_string()
     assert content == "Test Content"
 
+def test_data_as_bytes(requests_mock, mock_data_details):
+    data = Data(**mock_data_details)
+
+    requests_mock.get(data.url, text="Test Content")
+
+    content = data.as_bytes()
+    assert content == b'Test Content'
 
 def test_nyx_data_download_failure(requests_mock, mock_data_details):
     data = Data(**mock_data_details)
