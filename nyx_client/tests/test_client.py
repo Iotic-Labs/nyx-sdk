@@ -424,22 +424,18 @@ def test_subscribe_error(requests_mock, nyx_client):
         categories=["test_category"],
         genre="test_genre",
     )
-    
+
     error_response = {
         "error": "Subscription failed",
         "message": "Unable to subscribe to data: insufficient permissions",
-        "code": "SUBSCRIPTION_ERROR"
+        "code": "SUBSCRIPTION_ERROR",
     }
-    
-    requests_mock.post(
-        "https://mock.nyx.url/api/portal/purchases/transactions",
-        status_code=400,
-        json=error_response
-    )
-    
+
+    requests_mock.post("https://mock.nyx.url/api/portal/purchases/transactions", status_code=400, json=error_response)
+
     with pytest.raises(requests.HTTPError) as exc_info:
         nyx_client.subscribe(test_data)
-    
+
     # Verify the error response was received
     assert exc_info.value.response.status_code == 400
     assert exc_info.value.response.json() == error_response
