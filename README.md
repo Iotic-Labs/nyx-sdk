@@ -11,7 +11,8 @@ The Nyx ecosystem is at an early stage of its development, please give us feedba
 
 ## 💡 Shortcuts
 
-- [**Nyx Client SDK**](./README.sdk.md)
+- [**Nyx Client SDK**](./nyx_client/README.md)
+- [**Nyx Client SDK Extras (including RAG integration) **](./nyx_extras/README.md)
 - [**Nyx Client SDK examples**](./examples)
 - [**FAQ**](./FAQ.md)
 
@@ -92,7 +93,7 @@ organisation. You’re likely to have experienced some of these:
 
 **Using the Nyx Client SDK**
 
-See [I want to connect my Data](./README.sdk.md#I-want-to-connect-my-data)
+See [I want to connect my Data](./nyx_client/README.md#I-want-to-connect-my-data)
 
 ### As an application builder
 
@@ -119,4 +120,4 @@ Coming soon.
 
 **Using the Nyx SDK**
 
-See [I want to consume the data](./README.sdk.md#I-want-to-consume-the-data)
+See [I want to consume the data](./nyx_client/README.md#I-want-to-consume-the-data)

@@ -34,3 +34,4 @@ sprints
 */.python-version/
 **/.ipynb_checkpoints/
 *.json
+**_build/
