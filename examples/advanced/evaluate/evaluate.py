@@ -19,7 +19,7 @@ from openai import OpenAI
 from pydantic import BaseModel
 
 from examples.advanced.evaluate.config import JUDGE_PROMPT, client_openai_sm, clients, input_prompts
-from nyx_client.extensions.langchain import NyxLangChain
+from nyx_extras.langchain import NyxLangChain
 
 # Judge OpenAI client
 judge = OpenAI()
