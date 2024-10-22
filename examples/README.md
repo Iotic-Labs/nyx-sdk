@@ -30,11 +30,11 @@ pip install -r requirements.txt
 
 This will install core functionality to interact with Nyx, as well as some support for auto-vectorization, and conversion of CSV products from Nyx into an [SQLite](https://www.sqlite.org/) DB that can be handled by an AI. It's designed to support advanced usage where you will integrate results from Nyx yourself.
 
-To only install the core of the client with `pip install nyx_client` if you're planning on advanced usage. See [Nyx SDK](../README.sdk.md).
+To only install the core of the client with `pip install nyx_client` if you're planning on advanced usage. See [Nyx SDK](../nyx_client/README.md).
 
 ## ⚙️ Configuration
 
-See [First time set up](../README.sdk.md#First-time-set-up) on how to generate initial configuration to communicate with your nyx instance.
+See [First time set up](../nyx_client/README.md#First-time-set-up) on how to generate initial configuration to communicate with your nyx instance.
 
 ### 🔐 API Keys
 
@@ -46,9 +46,9 @@ export OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
 ```
 or
 ```python
-from nyx_client.configuration import ConfigProvider, ConfigType
+from nyx_client import NyxConfigExtended, ConfigType, BaseNyxConfig
 
-ConfigProvider.create_config(ConfigType.OPENAI, api_key="your_api_key_here")
+config = NyxConfigExtended(api_key="", provider=ConfigType.OPENAI, base_config=BaseNyxConfig.from_env())
 ```
 or if using Cohere
 ```shell
@@ -56,14 +56,23 @@ export COHERE_API_KEY=<YOUR_COHERE_API_KEY>
 ```
 or
 ```python
-from nyx_client.configuration import ConfigProvider, ConfigType
+from nyx_client import NyxConfigExtended, ConfigType, BaseNyxConfig
 
-ConfigProvider.create_config(ConfigType.COHERE, api_key="your_api_key_here")
+config = NyxConfigExtended(api_key="", provider=ConfigType.COHERE, base_config=BaseNyxConfig.from_env())
 ```
+
+The `NyxConfigExtended` instance can then be used with the `NyxLangChain` client.
 
 ## 🎓 Examples
 
 ### [High-level](./high_level)
+
+To run
+
+```shell
+cd examples/high_level
+python highlevel.py
+```
 
 These use additional dependencies for an out-of-the-box experience with minimal integration.
 
@@ -75,6 +84,13 @@ Example | Summary | Notes
 [`highlevel.py::custom_openai_llm()`](./high_level/highlevel.py) | Use a custom model instead of the nyx default one for an LLM. | This also demonstrates how do specify your own [`BaseChatModel`](https://api.python.langchain.com/en/latest/language_models/langchain_core.language_models.chat_models.BaseChatModel.html), i.e. any LLM provider supporting said LangChain interface.
 
 ### [Advanced Usage](./advanced)
+
+e.g. to run the RAG API example:
+
+```shell
+cd examples/advanced/rag_api
+python app.py
+```
 
 These require manual integration with AI or other tools, offering more control over the process.
 
@@ -125,13 +141,13 @@ jupyter lab
 
 ## 👉 Gotchas
 
-See [SDK readme section](../README.sdk.md#-gotchas)
+See [SDK readme section](../nyx_client/README.md#-gotchas)
 
 ## 🐞 Troubleshooting
 
-If you encounter any issues, we'd [love to hear from you](../README.sdk.md#-troubleshooting)
+If you encounter any issues, we'd [love to hear from you](../nyx_client/README.md#-troubleshooting)
 
 
 ## 🤝 Contributing
 
-See [SDK readme section](../README.sdk.md#-contributing).
+See [SDK readme section](../nyx_client/README.md#-contributing).

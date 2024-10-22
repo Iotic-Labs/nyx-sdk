@@ -14,8 +14,8 @@
 
 import logging
 
-from nyx_client.configuration import ConfigProvider, ConfigType
-from nyx_client.extensions.langchain import NyxLangChain
+from nyx_client.configuration import NyxConfigExtended, ConfigType, BaseNyxConfig
+from nyx_extras.langchain import NyxLangChain
 
 
 def main():
@@ -30,7 +30,8 @@ def main():
     environment variable, or it must be passed in explicitly.
     """
     # Supply ConfigType.COHERE to use Cohere LLM instead
-    config = ConfigProvider.create_config(ConfigType.OPENAI, api_key="your_api_key_here")
+    base_config = BaseNyxConfig.from_env()
+    config = NyxConfigExtended(base_config=base_config, provider=ConfigType.COHERE.OPENAI, api_key="your_api_key_here")
     client = NyxLangChain(config=config, log_level=logging.DEBUG)
     while True:
         prompt = input("What is your question? ")
@@ -46,11 +47,10 @@ def custom_data():
     speed up the prompt, by reducing the data, and also prevents the data being downloaded and processed
     automatically, giving you more control.
     """
-    config = ConfigProvider.create_config(ConfigType.OPENAI, api_key="your_api_key_here")
-    client = NyxLangChain(config=config)
+    client = NyxLangChain()
 
     # Get data with the climate category only
-    data = client.get_data_for_categories(["climate"])
+    data = client.get_data(genre="sdktest1", categories=["ai"]) # Combine multiples
 
     while True:
         prompt = input("What is your question? ")
@@ -64,8 +64,7 @@ def include_own_data():
     """
     This displays how to include your own data, created in Nyx, in the query.
     """
-    config = ConfigProvider.create_config(ConfigType.OPENAI, api_key="your_api_key_here")
-    client = NyxLangChain(config=config)
+    client = NyxLangChain()
 
     while True:
         prompt = input("What is your question? ")
@@ -83,10 +82,32 @@ def custom_openai_llm():
     """
     from langchain_openai import ChatOpenAI
 
-    config = ConfigProvider.create_config(ConfigType.OPENAI)
-    llm = ChatOpenAI(model_name="gpt-4o-mini", api_key=config.api_key)
+    config = NyxConfigExtended.from_env(provider=ConfigType.OPENAI)
+
+    llm = ChatOpenAI(model="gpt-4o-mini", api_key=config.api_key)
     client = NyxLangChain(config=config, llm=llm)
 
+    while True:
+        prompt = input("What is your question? ")
+        if prompt == "":
+            continue
+        print(client.query(prompt, include_own=True))
+
+def custom_llama_llm():
+    """
+    You're not restricted to any LLM provider, you are free to use any of the supported BaseChatModel 
+    (https://python.langchain.com/docs/integrations/chat/)
+
+    In this example we're using groq to run Llama 3.1 70b, but this can also be ran on your own hardware
+    for a totally private RAG!
+    """
+    # pip install langchain-groq
+    from langchain_groq import ChatGroq
+    
+    llm = ChatGroq(model="llama3-groq-70b-8192-tool-use-preview")
+    config = NyxConfigExtended.from_env(provider=ConfigType.BASE)
+
+    client = NyxLangChain(config=config, llm=llm)
     while True:
         prompt = input("What is your question? ")
         if prompt == "":
