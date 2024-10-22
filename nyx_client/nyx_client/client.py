@@ -19,6 +19,7 @@ import importlib.metadata
 import json
 import logging
 from collections.abc import Sequence
+from enum import Enum, unique
 from typing import Any, Literal
 
 import requests
@@ -44,6 +45,21 @@ NYX_META_SEARCH_TEXT_ENDPOINT = "meta/search/text"
 NYX_PURCHASES_TRANSACTIONS_ENDPOINT = "purchases/transactions"
 
 log = logging.getLogger(__name__)
+
+
+@unique
+class SparqlResultType(str, Enum):
+    """Available query result (response) types for SPARQL query."""
+
+    SPARQL_JSON = "application/sparql-results+json"
+    SPARQL_XML = "application/sparql-results+xml"
+    SPARQL_CSV = ("text/csv",)
+    RDF_NTRIPLES = "application/n-triples"
+    RDF_TURTLE = "text/turtle"
+    RDF_XML = "application/rdf+xml"
+
+    def __str__(self) -> str:
+        return self.value
 
 
 class NyxClient:
@@ -84,8 +100,10 @@ class NyxClient:
             self._is_setup = True
         self._version = importlib.metadata.version("nyx-client")
 
-        # Empty variable names
-        self.org, self.name = ""
+        self._base_headers = {"X-Requested-With": "nyx-sdk", "sdk-version": self._version}
+
+        self.org = ""
+        self.name = ""
         self.community_mode = False
 
     def _setup(self):
@@ -120,14 +138,26 @@ class NyxClient:
         self._token = resp["access_token"]
         self._refresh = resp["refresh_token"]
 
-    def _common_headers(self) -> dict:
-        """Return common headers for API requests."""
-        return {"X-Requested-With": "nyx-sdk", "Content-Type": "application/json", "sdk-version": self._version}
+    def _make_headers(
+        self, content_type: str = "application/json", extra_headers: dict[str, str] | None = None
+    ) -> dict[str, str]:
+        """Return common headers for API requests combined with the provided ones."""
+        headers = self._base_headers.copy()
+        headers["Content-Type"] = content_type
+        if self._token:
+            headers["authorization"] = "Bearer " + self._token
+        if extra_headers:
+            headers.update(extra_headers)
+        return headers
 
     @ensure_setup
     @auth_retry
     def _nyx_post(
-        self, endpoint: str, data: dict, headers: dict | None = None, multipart: MultipartEncoder | None = None
+        self,
+        endpoint: str,
+        data: dict,
+        headers: dict[str, str] | None = None,
+        multipart: MultipartEncoder | None = None,
     ):
         """Send a POST request to the Nyx API.
 
@@ -143,16 +173,11 @@ class NyxClient:
         Raises:
             requests.HTTPError: If the request fails.
         """
-        if not headers:
-            headers = self._common_headers()
-
-        if self._token:
-            headers["authorization"] = "Bearer " + self._token
         resp = requests.post(
             url=self.config.nyx_url + NYX_API_BASE_URL + endpoint,
             json=data if data else None,
             data=multipart if multipart else None,
-            headers=headers,
+            headers=self._make_headers(headers),
         )
         if resp.status_code == 400:
             log.warning(resp.json())
@@ -179,16 +204,11 @@ class NyxClient:
         Raises:
             requests.HTTPError: If the request fails.
         """
-        if not headers:
-            headers = self._common_headers()
-
-        if self._token:
-            headers["authorization"] = "Bearer " + self._token
         resp = requests.patch(
             url=self.config.nyx_url + NYX_API_BASE_URL + endpoint,
             json=data if data else None,
             data=multipart if multipart else None,
-            headers=headers,
+            headers=self._make_headers(headers),
         )
         if resp.status_code == 400:
             log.warning(resp.json())
@@ -211,10 +231,9 @@ class NyxClient:
         Raises:
             requests.HTTPError: If the request fails.
         """
-        headers = self._common_headers()
-        if self._token:
-            headers["authorization"] = "Bearer " + self._token
-        resp = requests.get(url=self.config.nyx_url + NYX_API_BASE_URL + endpoint, headers=headers, params=params)
+        resp = requests.get(
+            url=self.config.nyx_url + NYX_API_BASE_URL + endpoint, headers=self._make_headers(), params=params
+        )
         resp.raise_for_status()
         return resp.json()
 
@@ -233,51 +252,43 @@ class NyxClient:
         Raises:
             requests.HTTPError: If the request fails.
         """
-        headers = self._common_headers()
-        if self._token:
-            headers["authorization"] = "Bearer " + self._token
-        resp = requests.delete(url=self.config.nyx_url + NYX_API_BASE_URL + endpoint, headers=headers, params=params)
+        resp = requests.delete(
+            url=self.config.nyx_url + NYX_API_BASE_URL + endpoint, headers=self._make_headers(), params=params
+        )
         resp.raise_for_status()
 
     @ensure_setup
     @auth_retry
-    def _sparql_query(self, query: str, scope: Literal["local", "global"]) -> list[dict[str, str]]:
+    def sparql_query(
+        self, query: str, result_type: SparqlResultType = SparqlResultType.SPARQL_JSON, local_only: bool = False
+    ) -> str:
         """Execute a SPARQL query and process the results.
 
+        NOTE: This method is experimental and its definition might change without notice!
+
         Args:
-            query: The SPARQL query string.
-            scope: The scope of the query (LOCAL or GLOBAL).
+            query: A SPARQL 1.1 query string.
+            result_type: The result format for the query.
+            local_only: Whether to only query the local Nyx instance as opposed to the whole Nyx network.
 
         Returns:
-            A list of dictionaries representing the query results.
+            A string of the result in the specified format
 
         Raises:
-            ValueError: If the response is incomplete.
             requests.HTTPError: If there's an HTTP error during the query execution.
         """
-        headers = {
-            "X-Requested-With": "nyx-sdk",
-            "Content-Type": "application/json",
-            "Accept": "application/sparql-results+json",
-            "sdk-version": self._version,
-        }
-        headers["authorization"] = "Bearer " + self._token
-        resp = requests.get(
-            url=self.config.nyx_url + NYX_API_BASE_URL + NYX_META_SPARQL_ENDPOINT + scope,
-            params={"query": query},
-            headers=headers,
+        resp = requests.post(
+            url=(
+                self.config.nyx_url
+                + NYX_API_BASE_URL
+                + NYX_META_SPARQL_ENDPOINT
+                + ("local" if local_only else "global")
+            ),
+            headers=self._make_headers(content_type="application/sparql-query", extra_headers={"Accept": result_type}),
+            data=query,
         )
         resp.raise_for_status()
-
-        resp_json = resp.json()
-        results = []
-        for binding in resp_json["results"]["bindings"]:
-            inner_json = {}
-            for k in binding:
-                inner_json[k] = binding[k]["value"]
-            results.append(inner_json)
-
-        return results
+        return resp.text
 
     def categories(self) -> list[str]:
         """Retrieve all categories from the federated network.
@@ -330,6 +341,7 @@ class NyxClient:
         content_type: str | None = None,
         subscription_state: Literal["subscribed", "all", "not-subscribed"] = "all",
         timeout: int = 3,
+        local_only: bool = False,
     ) -> list[Data]:
         """Search for new data in the Nyx system.
 
@@ -342,12 +354,14 @@ class NyxClient:
             content_type: Content type to filter by.
             subscription_state: Subscription state to filter by.
             timeout: Timeout for the search request in seconds.
+            local_only: Whether to only search for data defined in the local Nyx instance as opposed to the whole Nyx
+                network.
 
         Returns:
             A list of `Data` instances matching the search criteria.
         """
         url = NYX_PRODUCTS_ENDPOINT
-        params = {"include": subscription_state, "timeout": timeout, "scope": "global"}
+        params = {"include": subscription_state, "timeout": timeout, "scope": "local" if local_only else "global"}
         if categories:
             params["category"] = categories
         if genre:
@@ -433,7 +447,7 @@ class NyxClient:
             license=license,
             content_type=content_type,
             subscription_state="all",
-            scope="local",
+            local_only=True,
         )
 
     def get_data(
@@ -445,7 +459,7 @@ class NyxClient:
         license: str | None = None,
         content_type: str | None = None,
         subscription_state: Literal["subscribed", "all", "not-subscribed"] = "all",
-        scope: Literal["local", "global"] = "global",
+        local_only: bool = False,
     ) -> list[Data]:
         """Retrieve data from the federated network.
 
@@ -456,13 +470,17 @@ class NyxClient:
             license: License to filter by.
             content_type: Content type to filter by.
             subscription_state: Subscription state to filter by.
-            scope: The scope of the lookup. Use "global" (the default) to interrogate the whole Nyx network or "local"
-                to only consider data defined in the local Nyx instance.
+            local_only: Whether to only interrogate data defined in the local Nyx instance as opposed to the whole Nyx
+                network.
 
         Returns:
             A list of `Data` instances matching the criteria.
         """
-        params: dict[str, Any] = {"include": subscription_state, "timeout": 10, "scope": scope}
+        params: dict[str, Any] = {
+            "include": subscription_state,
+            "timeout": 10,
+            "scope": "local" if local_only else "global",
+        }
         if categories:
             params["category"] = categories
         if genre:
@@ -562,7 +580,7 @@ class NyxClient:
 
         headers = {"X-Requested-With": "nyx-sdk", "Content-Type": multipart_data.content_type}
 
-        resp = self._nyx_post(NYX_PRODUCTS_ENDPOINT, data, headers, multipart_data)
+        resp = self._nyx_post(NYX_PRODUCTS_ENDPOINT, data, headers=headers, multipart=multipart_data)
 
         return Data(
             name=name,
