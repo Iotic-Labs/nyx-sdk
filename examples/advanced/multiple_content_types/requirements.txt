@@ -1,0 +1,2 @@
+streamlit==1.38.0
+nyx-client[langchain-openai]==0.1.3
