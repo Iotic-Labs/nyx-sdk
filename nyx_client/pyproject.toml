@@ -1,0 +1,81 @@
+[tool.poetry]
+name = "nyx-client"
+version = "0.2.1a0"
+description = "Nyx Client offers a simple API for interacting with data in your Nyx network."
+authors = [
+    "Iotics <info@iotics.com>",
+    "Andy Blair <andy.blair@iotics.com>",
+    "Conal McLaughlin <conal.mclaughlin@iotics.com>"
+]
+readme = "README.md"
+keywords = ["client", "data", "sdk", "ai", "exchange", "nyx", "rag", "gen-ai", "iotics"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Internet",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence", "License :: OSI Approved :: Apache Software License"
+]
+homepage = "https://www.get-nyx.io"
+repository = "https://github.com/Iotic-Labs/nyx-sdk"
+documentation = "https://nyx-client.readthedocs.io/en/stable"
+
+[tool.poetry.urls]
+"Issue tracker" = "https://github.com/Iotic-Labs/nyx-sdk/issues"
+"Chat" = "https://discord.gg/zS8pVHjqSf"
+"Changes" = "https://github.com/Iotic-Labs/nyx-sdk/blob/main/CHANGELOG.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+requests-toolbelt = "^1.0.0"
+python-dotenv = "^1.0.1"
+click = "^8.1.7"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.5.6"
+pytest = "^8.3.2"
+pytest-mock = "^3.14.0"
+requests-mock = "^1.12.1"
+
+[tool.ruff]
+# Allow lines to be as long as 120.
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle
+    "F",    # Pyflakes
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "I",    # isort
+    "UP",   # pyupgrade
+    "T20",  # flake8-print
+    "FIX",  # flake8-fixme
+    "G004", # flake8-logging-format
+    "D",    # pydocstyle
+]
+ignore = [
+    "D100", # Missing docstring in public module
+    "D105", # Missing docstring in magic method
+]
+
+
+[tool.ruff.lint.per-file-ignores]
+"examples/**" = ["T20"]
+"tests/**" = ["T20", "F", "SIM"]
+# Ignore pydocstyle rules everywhere except for actual client.
+"!nyx_client/**.py" = ["D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.poetry.scripts]
+nyx-client = "nyx_client.cli.__main__:cli"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

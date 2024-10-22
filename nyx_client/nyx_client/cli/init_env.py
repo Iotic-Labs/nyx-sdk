@@ -19,7 +19,6 @@ import click
 import requests
 
 from nyx_client.cli.common import SDK_CLI_DEFAULT_HEADERS
-from nyx_client.identity_auth import IdentityAuth
 
 TERMS = """
 To use Nyx you must agree to our Terms of Service when sharing content
@@ -75,32 +74,9 @@ def init_env(filename: str = ".env"):
     token = resp.json()["access_token"]
     headers["authorization"] = f"Bearer {token}"
 
-    # Get username
-    resp = requests.get(
-        url + "/api/portal/users/me",
-        headers=headers,
-    )
-    if not resp.ok:
-        raise RuntimeError(f"Unable to retrieve Nyx user details, {resp.text}")
-
-    username = resp.json()["name"]
-
-    # Get resolver from qapi-connection
-    resp = requests.get(
-        url + "/api/portal/auth/qapi-connection",
-        headers=headers,
-    )
-    if not resp.ok:
-        raise RuntimeError(f"Unable to retrieve Nyx connection information, {resp.text}")
-
-    resolver = resp.json()["resolver_url"]
-
-    click.echo("Generating user/agent secrets")
-    secrets = IdentityAuth.generate_config(resolver)
-    secrets += "\n"
+    secrets = ""
 
     # NYX creds
-    secrets += f'\nNYX_USERNAME="{username}"'
     secrets += f'\nNYX_PASSWORD="{password}"'
     secrets += f'\nNYX_EMAIL="{email}"'
     secrets += f'\nNYX_URL="{url}"'
