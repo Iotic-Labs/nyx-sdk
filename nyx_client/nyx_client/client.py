@@ -100,7 +100,11 @@ class NyxClient:
             self._is_setup = True
         self._version = importlib.metadata.version("nyx-client")
 
-        self._base_headers = {"X-Requested-With": "nyx-sdk", "sdk-version": self._version}
+        self._base_headers: dict[str, str] = {
+            "X-Requested-With": "nyx-sdk",
+            "X-Client-Type": "nyx-sdk",
+            "sdk-version": self._version,
+        }
 
         self.org = ""
         self.name = ""
