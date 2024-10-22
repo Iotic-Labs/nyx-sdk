@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nyx-client"
-version = "0.2.1a0"
+version = "0.2.0rc1"
 description = "Nyx Client offers a simple API for interacting with data in your Nyx network."
 authors = [
     "Iotics <info@iotics.com>",
