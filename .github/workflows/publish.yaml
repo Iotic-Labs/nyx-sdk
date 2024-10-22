@@ -1,3 +1,6 @@
+permissions:
+  id-token: write
+
 name: Verify and Upload nyx_client and nyx_extras to PyPI
 on:
   workflow_dispatch:
@@ -38,7 +41,6 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
-          password: ${{ secrets.PYPI_PASSWORD2024 }}
           packages-dir: nyx_client/dist/
           verify-metadata: true
           verbose: true
