@@ -11,8 +11,8 @@ The Nyx ecosystem is at an early stage of its development, please give us feedba
 
 ## 💡 Shortcuts
 
-- [**Nyx Client SDK**](./nyx_client/README.md)
-- [**Nyx Client SDK Extras (including RAG integration) **](./nyx_extras/README.md)
+- [**Nyx Client SDK**](./nyx_client)
+- [**Nyx Client SDK Extras (including RAG integration)**](./nyx_extras)
 - [**Nyx Client SDK examples**](./examples)
 - [**FAQ**](./FAQ.md)
 
