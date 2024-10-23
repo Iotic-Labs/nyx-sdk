@@ -517,6 +517,27 @@ class NyxClient:
             for resp in resps
         ]
 
+    def get_my_data_by_name(self, name: str) -> Data:
+        """Retrieve a data based on its unique name.
+        This only works on data you own
+        Args:
+            name: The data unique name.
+        Returns:
+            The `Data` instance identified with the provided name.
+        """
+        resp = self._nyx_get(f"{NYX_PRODUCTS_ENDPOINT}/{name}")
+        return Data(
+            name=resp["name"],
+            title=resp["title"],
+            description=resp["description"],
+            url=resp["accessURL"],
+            content_type=resp["contentType"],
+            creator=resp["creator"],
+            org=self.org,
+            categories=resp["categories"],
+            genre=resp["genre"],
+        )
+
     @ensure_setup
     def create_data(
         self,
