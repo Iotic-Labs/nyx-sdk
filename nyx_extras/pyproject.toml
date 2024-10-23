@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nyx-extras"
-version = "0.2.0rc3"
+version = "0.2.0rc4"
 description = "Nyx Client SDK Extras provides a powerful toolkit for building generative AI applications using data brokered on the Nyx platform."
 authors = [
     "Iotics <info@iotics.com>",
