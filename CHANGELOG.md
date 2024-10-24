@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All configs; `BaseNyxConfig` and `NyxConfigExtended` (Replaces `OpenAiNyxConfig` and `CohereNyxConfig`) are now constructed from params by default, old functionality is exposed via `BaseNyxConfig.from_env()`
 - `NyxClient` most methods to retrieve data have been replaced in preference of `get_data()` that supports multiple combined filters
 - `NyxClient` is now only initalized with an optional `BaseNyxConfig`, and no-longer takes an `env_file`
+- `NyxClient.get_data_by_name` has been renamed to `get_my_data_by_name`
 
 ### Removed
 
