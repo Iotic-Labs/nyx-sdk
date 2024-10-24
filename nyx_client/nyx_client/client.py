@@ -21,6 +21,7 @@ import logging
 from collections.abc import Sequence
 from enum import Enum, unique
 from typing import Any, Literal
+from urllib.parse import quote_plus
 
 import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder
@@ -518,12 +519,18 @@ class NyxClient:
         ]
 
     def get_my_data_by_name(self, name: str) -> Data:
-        """Retrieve a data based on its unique name.
+        """Retrieve your own data based on its unique name.
+
         This only works on data you own
+
         Args:
-            name: The data unique name.
+            name: The data unique name (unique per organization).
+
         Returns:
-            The `Data` instance identified with the provided name.
+            Your `Data` instance identified with the provided name.
+
+        Raises:
+            requests.HTTPError: If the API request fails.
         """
         resp = self._nyx_get(f"{NYX_PRODUCTS_ENDPOINT}/{name}")
         return Data(
@@ -760,4 +767,6 @@ class NyxClient:
         Raises:
             requests.HTTPError: If the API request fails.
         """
-        self._nyx_delete(f"{NYX_PURCHASES_TRANSACTIONS_ENDPOINT}/{data.creator}/{data.name}")
+        # Creator is expected to be double encoded
+        creator = quote_plus(quote_plus(data.creator))
+        self._nyx_delete(f"{NYX_PURCHASES_TRANSACTIONS_ENDPOINT}/{creator}/{data.name}")
