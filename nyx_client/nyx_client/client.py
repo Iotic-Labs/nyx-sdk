@@ -20,7 +20,8 @@ import json
 import logging
 from collections.abc import Sequence
 from enum import Enum, unique
-from typing import Any, Literal
+from io import BufferedReader
+from typing import Any, Literal, Optional
 from urllib.parse import quote_plus
 
 import requests
@@ -554,13 +555,14 @@ class NyxClient:
         size: int,
         genre: str,
         categories: Sequence[str],
-        download_url: str,
         content_type: str,
         lang: str = "en",
         status: str = "published",
         preview: str = "",
         price: int | None = None,
         license_url: str | None = None,
+        download_url: Optional[str] = None,
+        file: Optional[BufferedReader] = None,
     ) -> Data:
         """Create new data in the system.
 
@@ -572,6 +574,7 @@ class NyxClient:
             genre: The genre or category of the data.
             categories: A list of categories the data belongs to.
             download_url: The URL where the data can be downloaded.
+            file: FileIO object of the file you wish to upload
             content_type: The mime type of the data located at download_url.
             lang: The language of the data.
             status: The publication status of the data.
@@ -584,7 +587,14 @@ class NyxClient:
 
         Raises:
             requests.HTTPError: If the API request fails.
+            ValueError: When neither download_url or file is provided, or both are provided
         """
+        if not download_url and not file:
+            raise ValueError("Either download_url or file should be supplied")
+
+        if download_url and file:
+            raise ValueError("both download_url or file should not be supplied together")
+
         input_bytes = preview.encode("utf-8")
         base64_bytes = base64.b64encode(input_bytes)
         preview_base64_string = base64_bytes.decode("utf-8")
@@ -599,20 +609,25 @@ class NyxClient:
             "lang": lang,
             "status": status,
             "preview": preview_base64_string,
-            "downloadURL": download_url,
             "contentType": content_type,
         }
+        if download_url:
+            data["download_url"] = download_url
         if price:
             data["price"] = price
-
         if license_url:
             data["licenseURL"] = license_url
 
-        multipart_data = MultipartEncoder(
-            fields={
-                "productMetadata": json.dumps(data),
-            }
-        )
+        fields = {
+            "productMetadata": json.dumps(data),
+        }
+
+        if file:
+            file.seek(0)
+            # Add file to fields with filename
+            fields["productData"] = (name, file, content_type)
+
+        multipart_data = MultipartEncoder(fields=fields)
 
         headers = {"X-Requested-With": "nyx-sdk", "Content-Type": multipart_data.content_type}
 
@@ -625,7 +640,7 @@ class NyxClient:
             org=self.org,
             content_type=content_type,
             size=size,
-            url=resp.get("accessURL", download_url),
+            url=resp.get("accessURL", resp.get("downloadURL")),
             creator=self.org,
             categories=resp["categories"],
             genre=resp["genre"],
@@ -640,13 +655,14 @@ class NyxClient:
         size: int,
         genre: str,
         categories: Sequence[str],
-        download_url: str,
         content_type: str,
         lang: str = "en",
         status: str = "published",
         preview: str = "",
         price: int | None = None,
         license_url: str | None = None,
+        download_url: Optional[str] = None,
+        file: Optional[BufferedReader] = None,
     ) -> Data:
         """Updates existing data in the system.
 
@@ -658,6 +674,7 @@ class NyxClient:
             genre: The genre or category of the data.
             categories: A list of categories the data belongs to.
             download_url: The URL where the data can be downloaded.
+            file: FileIO object of the file you wish to upload
             content_type: The mime type of the data located at download_url.
             lang: The language of the data.
             status: The publication status of the data.
@@ -669,8 +686,14 @@ class NyxClient:
             A `Data` instance, containing the updated information.
 
         Raises:
-            requests.HTTPError: If the API request fails.
+            ValueError: When neither download_url or file is provided, or both are provided
         """
+        if not download_url and not file:
+            raise ValueError("Either download_url or file should be supplied")
+
+        if download_url and file:
+            raise ValueError("both download_url or file should not be supplied together")
+
         input_bytes = preview.encode("utf-8")
         base64_bytes = base64.b64encode(input_bytes)
         preview_base64_string = base64_bytes.decode("utf-8")
@@ -685,20 +708,24 @@ class NyxClient:
             "lang": lang,
             "status": status,
             "preview": preview_base64_string,
-            "downloadURL": download_url,
             "contentType": content_type,
         }
         if price:
             data["price"] = price
-
+        if download_url:
+            data["downloadURL"] = download_url
         if license_url:
             data["licenseURL"] = license_url
 
-        multipart_data = MultipartEncoder(
-            fields={
-                "productMetadata": json.dumps(data),
-            }
-        )
+        fields = {
+            "productMetadata": json.dumps(data),
+        }
+        if file:
+            file.seek(0)
+            # Add file to fields with filename
+            fields["productData"] = (name, file, content_type)
+
+        multipart_data = MultipartEncoder(fields=fields)
 
         headers = {"X-Requested-With": "nyx-sdk", "Content-Type": multipart_data.content_type}
 
@@ -711,7 +738,7 @@ class NyxClient:
             org=self.org,
             content_type=content_type,
             size=size,
-            url=resp.get("accessURL", download_url),
+            url=resp.get("accessURL", resp.get("downloadURL")),
             creator=self.org,
             categories=resp["categories"],
             genre=resp["genre"],
