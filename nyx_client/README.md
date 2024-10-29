@@ -80,6 +80,29 @@ client.create_data(
 )
 ```
 
+### I want to share data using the instance's storage to upload
+
+```python
+from nyx_client import NyxClient
+
+client = NyxClient()
+
+with open("somefile.csv") as infile:
+  client.create_data(
+      name="MyData1",
+      title="My Data #1",
+      description="The description of the data #1",
+      size=1080,
+      genre="ai",
+      categories=["cat1", "cat2", "cat3"],
+      file=infile,
+      content_type="text/csv",
+      lang="fr",
+      preview="col1, col2, col3\naaa, bbb, ccc",
+      license_url="https://opensource.org/licenses/MIT",
+  )
+```
+
 ### I want to delete/disconnect my Data
 
 ```python

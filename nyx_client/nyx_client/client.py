@@ -20,8 +20,8 @@ import json
 import logging
 from collections.abc import Sequence
 from enum import Enum, unique
-from io import BufferedReader
-from typing import Any, Literal, Optional
+from io import TextIOBase
+from typing import Any, Literal
 from urllib.parse import quote_plus
 
 import requests
@@ -542,6 +542,7 @@ class NyxClient:
             content_type=resp["contentType"],
             creator=resp["creator"],
             org=self.org,
+            size=resp["size"],
             categories=resp["categories"],
             genre=resp["genre"],
         )
@@ -552,17 +553,17 @@ class NyxClient:
         name: str,
         title: str,
         description: str,
-        size: int,
         genre: str,
         categories: Sequence[str],
         content_type: str,
         lang: str = "en",
         status: str = "published",
         preview: str = "",
+        size: int | None = None,
         price: int | None = None,
         license_url: str | None = None,
-        download_url: Optional[str] = None,
-        file: Optional[BufferedReader] = None,
+        download_url: str | None = None,
+        file: TextIOBase | None = None,
     ) -> Data:
         """Create new data in the system.
 
@@ -570,11 +571,12 @@ class NyxClient:
             name: The unique identifier for the data.
             title: The display title of the data.
             description: A detailed description of the data.
-            size: The size of the data, typically in bytes.
+            size: Approximate size of the data, if a file is provided the size
+                  will be calculated
             genre: The genre or category of the data.
             categories: A list of categories the data belongs to.
             download_url: The URL where the data can be downloaded.
-            file: FileIO object of the file you wish to upload
+            file: the file like object (TextIOBase) that you wish to upload
             content_type: The mime type of the data located at download_url.
             lang: The language of the data.
             status: The publication status of the data.
@@ -587,13 +589,13 @@ class NyxClient:
 
         Raises:
             requests.HTTPError: If the API request fails.
-            ValueError: When neither download_url or file is provided, or both are provided
+            ValueError: When download_url and file are both provided or both missing
         """
         if not download_url and not file:
             raise ValueError("Either download_url or file should be supplied")
 
         if download_url and file:
-            raise ValueError("both download_url or file should not be supplied together")
+            raise ValueError("both download_url and file should not be supplied together")
 
         input_bytes = preview.encode("utf-8")
         base64_bytes = base64.b64encode(input_bytes)
@@ -603,7 +605,6 @@ class NyxClient:
             "name": name,
             "title": title,
             "description": description,
-            "size": size,
             "genre": genre,
             "categories": categories,
             "lang": lang,
@@ -613,6 +614,8 @@ class NyxClient:
         }
         if download_url:
             data["download_url"] = download_url
+            data["size"] = size
+
         if price:
             data["price"] = price
         if license_url:
@@ -623,10 +626,7 @@ class NyxClient:
         }
 
         if file:
-            file.seek(0)
-            # Add file to fields with filename
             fields["productData"] = (name, file, content_type)
-
         multipart_data = MultipartEncoder(fields=fields)
 
         headers = {"X-Requested-With": "nyx-sdk", "Content-Type": multipart_data.content_type}
@@ -639,7 +639,7 @@ class NyxClient:
             description=description,
             org=self.org,
             content_type=content_type,
-            size=size,
+            size=resp.get("size"),
             url=resp.get("accessURL", resp.get("downloadURL")),
             creator=self.org,
             categories=resp["categories"],
@@ -652,17 +652,17 @@ class NyxClient:
         name: str,
         title: str,
         description: str,
-        size: int,
         genre: str,
         categories: Sequence[str],
         content_type: str,
         lang: str = "en",
         status: str = "published",
         preview: str = "",
+        size: int | None = None,
         price: int | None = None,
         license_url: str | None = None,
-        download_url: Optional[str] = None,
-        file: Optional[BufferedReader] = None,
+        download_url: str | None = None,
+        file: TextIOBase | None = None,
     ) -> Data:
         """Updates existing data in the system.
 
@@ -674,7 +674,7 @@ class NyxClient:
             genre: The genre or category of the data.
             categories: A list of categories the data belongs to.
             download_url: The URL where the data can be downloaded.
-            file: FileIO object of the file you wish to upload
+            file: the file like object (TextIOBase) that you wish to upload
             content_type: The mime type of the data located at download_url.
             lang: The language of the data.
             status: The publication status of the data.
@@ -686,13 +686,14 @@ class NyxClient:
             A `Data` instance, containing the updated information.
 
         Raises:
-            ValueError: When neither download_url or file is provided, or both are provided
+            requests.HTTPError: If the API request fails.
+            ValueError: When download_url and file are both provided or both missing
         """
         if not download_url and not file:
             raise ValueError("Either download_url or file should be supplied")
 
         if download_url and file:
-            raise ValueError("both download_url or file should not be supplied together")
+            raise ValueError("both download_url and file should not be supplied together")
 
         input_bytes = preview.encode("utf-8")
         base64_bytes = base64.b64encode(input_bytes)
@@ -702,7 +703,6 @@ class NyxClient:
             "title": title,
             "name": name,
             "description": description,
-            "size": size,
             "genre": genre,
             "categories": categories,
             "lang": lang,
@@ -712,6 +712,8 @@ class NyxClient:
         }
         if price:
             data["price"] = price
+            data["size"] = size
+
         if download_url:
             data["downloadURL"] = download_url
         if license_url:
@@ -721,8 +723,6 @@ class NyxClient:
             "productMetadata": json.dumps(data),
         }
         if file:
-            file.seek(0)
-            # Add file to fields with filename
             fields["productData"] = (name, file, content_type)
 
         multipart_data = MultipartEncoder(fields=fields)
@@ -737,7 +737,7 @@ class NyxClient:
             description=description,
             org=self.org,
             content_type=content_type,
-            size=size,
+            size=resp.get("size"),
             url=resp.get("accessURL", resp.get("downloadURL")),
             creator=self.org,
             categories=resp["categories"],
