@@ -30,9 +30,9 @@ class BaseNyxConfig:
 
     Attributes:
         nyx_url: The URL of the Nyx instance.
-        nyx_username: The username of the Nyx user.
         nyx_email: The email of the Nyx user.
         nyx_password: The password of the Nyx user.
+        override_token: Allows injection of JWT token
     """
 
     nyx_url: str
