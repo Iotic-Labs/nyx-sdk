@@ -87,7 +87,9 @@ from nyx_client import NyxClient
 
 client = NyxClient()
 
-with open("somefile.csv") as infile:
+# Open in binary mode with 'b', optionally
+# you can supply and encoding if required
+with open("somefile.csv", 'rb') as infile:
   client.create_data(
       name="MyData1",
       title="My Data #1",
