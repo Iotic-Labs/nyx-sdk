@@ -20,7 +20,7 @@ import json
 import logging
 from collections.abc import Sequence
 from enum import Enum, unique
-from io import TextIOBase
+from io import RawIOBase
 from typing import Any, Literal
 from urllib.parse import quote_plus
 
@@ -563,7 +563,7 @@ class NyxClient:
         price: int | None = None,
         license_url: str | None = None,
         download_url: str | None = None,
-        file: TextIOBase | None = None,
+        file: RawIOBase | None = None,
     ) -> Data:
         """Create new data in the system.
 
@@ -576,7 +576,7 @@ class NyxClient:
             genre: The genre or category of the data.
             categories: A list of categories the data belongs to.
             download_url: The URL where the data can be downloaded.
-            file: the file like object (TextIOBase) that you wish to upload
+            file: the file like object (RawIOBase) that you wish to upload
             content_type: The mime type of the data located at download_url.
             lang: The language of the data.
             status: The publication status of the data.
@@ -662,7 +662,7 @@ class NyxClient:
         price: int | None = None,
         license_url: str | None = None,
         download_url: str | None = None,
-        file: TextIOBase | None = None,
+        file: RawIOBase | None = None,
     ) -> Data:
         """Updates existing data in the system.
 
@@ -674,7 +674,7 @@ class NyxClient:
             genre: The genre or category of the data.
             categories: A list of categories the data belongs to.
             download_url: The URL where the data can be downloaded.
-            file: the file like object (TextIOBase) that you wish to upload
+            file: the file like object (RawIOBase) that you wish to upload
             content_type: The mime type of the data located at download_url.
             lang: The language of the data.
             status: The publication status of the data.

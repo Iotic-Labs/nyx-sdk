@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2024-10-31
+
+### Changed
+- `NyxClient.create_data` and `NyxClient.update_data` now make size and download url optional
+
+### Added
+- `NyxClient.create_data` and `NyxClient.update_data` now support a passing a file to be uploaded
+  either a file, or a download_url must be provided
+
 ## [0.2.0] - 2024-10-18
 
 ### Changed
