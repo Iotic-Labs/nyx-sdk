@@ -16,6 +16,7 @@
 
 """NYC client SDK."""
 
+from nyx_client.circles import Circle, RemoteHost
 from nyx_client.client import NyxClient
 from nyx_client.configuration import BaseNyxConfig, ConfigType, NyxConfigExtended
 from nyx_client.data import Data

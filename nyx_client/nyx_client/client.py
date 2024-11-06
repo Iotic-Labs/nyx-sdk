@@ -30,6 +30,7 @@ from requests_toolbelt.multipart.encoder import MultipartEncoder
 from nyx_client.circles import Circle
 from nyx_client.configuration import BaseNyxConfig
 from nyx_client.data import Data
+from nyx_client.ontology import ALLOW_ALL, ALLOW_NONE
 from nyx_client.utils import auth_retry, ensure_setup
 
 # Constants for URLs
@@ -227,7 +228,7 @@ class NyxClient:
         resp.raise_for_status()
 
         return resp.json()
-    
+
     @ensure_setup
     @auth_retry
     def _nyx_put(self, endpoint: str, data: dict):
@@ -244,7 +245,9 @@ class NyxClient:
             requests.HTTPError: If the request fails.
         """
         resp = requests.put(
-            url=self.config.nyx_url + NYX_API_BASE_URL + endpoint, json=data, headers=self._make_headers(),
+            url=self.config.nyx_url + NYX_API_BASE_URL + endpoint,
+            json=data,
+            headers=self._make_headers(),
         )
         if resp.status_code == 400:
             log.warning(resp.json())
@@ -590,8 +593,8 @@ class NyxClient:
         license_url: str | None = None,
         download_url: str | None = None,
         file: RawIOBase | None = None,
-        access_control: list[str] | None = None,
-        circles: list[Circle] | None = None
+        access_control: Literal["all", "none"] = "none",
+        circles: list[Circle] | None = None,
     ) -> Data:
         """Create new data in the system.
 
@@ -644,17 +647,18 @@ class NyxClient:
             "status": status,
             "preview": preview_base64_string,
             "contentType": content_type,
+            "accessControl": [ALLOW_NONE],
         }
         if download_url:
-            data["downloadURL"] = download_url
+            data["download_url"] = download_url
             data["size"] = size
 
         if price:
             data["price"] = price
         if license_url:
             data["licenseURL"] = license_url
-        if access_control:
-            data["accessControl"] = access_control
+        if access_control == "all":
+            data["accessControl"] = [ALLOW_ALL]
         if circles:
             data["circles"] = [c.did for c in circles]
 
@@ -836,7 +840,7 @@ class NyxClient:
         self._nyx_delete(f"{NYX_PURCHASES_TRANSACTIONS_ENDPOINT}/{creator}/{data.name}")
 
     def get_circles(self) -> list[Circle]:
-        """Get a list of circles
+        """Get a list of circles.
 
         Returns:
             A list of `Circle` objects
@@ -856,7 +860,6 @@ class NyxClient:
         Raises:
             requests.HTTPError: If the API request fails.
         """
-
         self._nyx_post(NYX_CIRCLE_ENDPOINT, data=circle.as_dict())
 
     def update_circle(self, circle: Circle):
@@ -868,7 +871,6 @@ class NyxClient:
         Raises:
             requests.HTTPError: If the API request fails.
         """
-
         self._nyx_put(f"{NYX_CIRCLE_ENDPOINT}/{circle.name}", data=circle.as_dict())
 
     def delete_circle(self, circle: Circle):
@@ -880,6 +882,4 @@ class NyxClient:
         Raises:
             requests.HTTPError: If the API request fails.
         """
-
         self._nyx_delete(f"{NYX_CIRCLE_ENDPOINT}/{circle.name}")
-
