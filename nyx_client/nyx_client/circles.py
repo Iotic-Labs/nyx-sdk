@@ -12,53 +12,51 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from dataclasses import asdict, dataclass
+from typing import Sequence
+
+
+@dataclass(frozen=True)
 class RemoteHost:
-    """Represents a remote host on the network"""
+    """Represents a remote host on the network.
 
-    def __init__(self, name: str, did: str):
-        self.name = name
-        self.did = did
-
-    def __repr__(self):
-        return f"RemoteHost({self.name}, {self.did})"
-
-class Circle:
-    """Represents a circle, which is a grouping of remote hosts
+    Attributes:
+            name: the name of the organization
+            did: the did of the remote host
     """
 
-    def __init__(self, did: str, name: str, description: str | None = None, organizations: list[RemoteHost] | None = None):
-        self.did = did
-        self.name = name
-        self.description = description
-        self.organizations = organizations
+    name: str
+    did: str
 
-    def __repr__(self):
-        return f"Circle({self.name}, {self.description}, {self.organizations})"
 
-    def contains(self, to_check: RemoteHost | str) -> bool:
-        """Checks if provided host is in the circle
+@dataclass
+class Circle:
+    """Represents a circle, which is a grouping of remote hosts.
 
-        Args:
-            to_check: Either the RemoteHost to check, or a DID, or org name.
+    Attributes:
+            did: the did of the circle
+            name: the name of the circle
+            description: optional description of what the circle is
+            organizations: optional list of remote organizations in the circle
+    """
 
-        Returns:
-            Boolean showing if the remote host is included
-        """
-        if not self.organizations:
-            return False
-        if isinstance(to_check, str):
-            for host in self.organizations:
-                if to_check == host.did or to_check == host.name:
-                    return True
-        elif isinstance(to_check, RemoteHost):
-            return to_check in self.organizations
-
-        return False
+    did: str
+    name: str
+    description: str | None
+    organizations: Sequence[RemoteHost] = ()
 
     @classmethod
     def from_json(cls, value: dict):
-        allowed_hosts : list[RemoteHost] = []
-        for raw_host in value.get("organizations", []):
+        """Builds a circle object from json.
+
+        Args:
+            value: the json dictionary (returned from API).
+
+        Returns:
+            Circle object
+        """
+        allowed_hosts: list[RemoteHost] = []
+        for raw_host in value.get("organizations", ()):
             allowed_hosts.append(RemoteHost(did=raw_host["did"], name=raw_host["name"]))
         return cls(
             did=value["did"],
@@ -68,18 +66,10 @@ class Circle:
         )
 
     def as_dict(self) -> dict:
-        resp: dict[str, str | list] = {
-                "did": self.did,
-                "name": self.name,
-        }
+        """Returns the object as a dictionary.
 
-        if self.description:
-            resp["description"] = self.description
+        Returns:
+            A dictionary of the circle, that matches POST/PUT requests in the API.
 
-        if self.organizations:
-            resp["organizations"] = [{"did": o.did} for o in self.organizations]
-
-
-        return resp
-
-
+        """
+        return asdict(self)
