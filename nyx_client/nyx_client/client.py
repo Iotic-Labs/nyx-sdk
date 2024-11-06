@@ -613,7 +613,7 @@ class NyxClient:
             "contentType": content_type,
         }
         if download_url:
-            data["download_url"] = download_url
+            data["downloadURL"] = download_url
             data["size"] = size
 
         if price:
