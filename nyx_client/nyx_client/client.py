@@ -27,6 +27,7 @@ from urllib.parse import quote_plus
 import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
+from nyx_client.circles import Circle
 from nyx_client.configuration import BaseNyxConfig
 from nyx_client.data import Data
 from nyx_client.utils import auth_retry, ensure_setup
@@ -45,6 +46,7 @@ NYX_META_LICENSES_ENDPOINT = "meta/licenseURLs"
 NYX_PRODUCTS_ENDPOINT = "products"
 NYX_META_SEARCH_TEXT_ENDPOINT = "meta/search/text"
 NYX_PURCHASES_TRANSACTIONS_ENDPOINT = "purchases/transactions"
+NYX_CIRCLE_ENDPOINT = "circles"
 
 log = logging.getLogger(__name__)
 
@@ -219,6 +221,30 @@ class NyxClient:
             headers=self._make_headers(
                 content_type="multipart/form-data" if multipart else "application/json", extra_headers=headers
             ),
+        )
+        if resp.status_code == 400:
+            log.warning(resp.json())
+        resp.raise_for_status()
+
+        return resp.json()
+    
+    @ensure_setup
+    @auth_retry
+    def _nyx_put(self, endpoint: str, data: dict):
+        """Send a PUT request to the Nyx API.
+
+        Args:
+            endpoint: The API endpoint to send the request to.
+            data: The data to send in the request body.
+
+        Returns:
+            The JSON response from the API.
+
+        Raises:
+            requests.HTTPError: If the request fails.
+        """
+        resp = requests.put(
+            url=self.config.nyx_url + NYX_API_BASE_URL + endpoint, json=data, headers=self._make_headers(),
         )
         if resp.status_code == 400:
             log.warning(resp.json())
@@ -564,6 +590,8 @@ class NyxClient:
         license_url: str | None = None,
         download_url: str | None = None,
         file: RawIOBase | None = None,
+        access_control: list[str] | None = None,
+        circles: list[Circle] | None = None
     ) -> Data:
         """Create new data in the system.
 
@@ -583,6 +611,8 @@ class NyxClient:
             preview: A preview or sample of the data.
             price: The price of the data in cents. If 0, the data is free.
             license_url: The URL of the license for the data.
+            access_control: Either allow all, or allow none
+            circles: a list of circles to add share the data with
 
         Returns:
             A `Data` instance, containing the download URL and title.
@@ -593,6 +623,9 @@ class NyxClient:
         """
         if not download_url and not file:
             raise ValueError("Either download_url or file should be supplied")
+
+        if access_control and circles:
+            raise ValueError("Both access_control and circles should not be supplied together")
 
         if download_url and file:
             raise ValueError("both download_url and file should not be supplied together")
@@ -620,6 +653,10 @@ class NyxClient:
             data["price"] = price
         if license_url:
             data["licenseURL"] = license_url
+        if access_control:
+            data["accessControl"] = access_control
+        if circles:
+            data["circles"] = [c.did for c in circles]
 
         fields = {
             "productMetadata": json.dumps(data),
@@ -797,3 +834,52 @@ class NyxClient:
         # Creator is expected to be double encoded
         creator = quote_plus(quote_plus(data.creator))
         self._nyx_delete(f"{NYX_PURCHASES_TRANSACTIONS_ENDPOINT}/{creator}/{data.name}")
+
+    def get_circles(self) -> list[Circle]:
+        """Get a list of circles
+
+        Returns:
+            A list of `Circle` objects
+
+        Raises:
+            requests.HTTPError: if the API request fails.
+        """
+        circles_raw = self._nyx_get(NYX_CIRCLE_ENDPOINT)
+        return [Circle.from_json(r) for r in circles_raw]
+
+    def create_circle(self, circle: Circle):
+        """Create a circle.
+
+        Args:
+            circle: The circle to be created.
+
+        Raises:
+            requests.HTTPError: If the API request fails.
+        """
+
+        self._nyx_post(NYX_CIRCLE_ENDPOINT, data=circle.as_dict())
+
+    def update_circle(self, circle: Circle):
+        """Updates a circle, based on the cirle's name.
+
+        Args:
+            circle: The circle to be updated.
+
+        Raises:
+            requests.HTTPError: If the API request fails.
+        """
+
+        self._nyx_put(f"{NYX_CIRCLE_ENDPOINT}/{circle.name}", data=circle.as_dict())
+
+    def delete_circle(self, circle: Circle):
+        """Deletes a circle, based on the cirle's name.
+
+        Args:
+            circle: The circle to be deleted.
+
+        Raises:
+            requests.HTTPError: If the API request fails.
+        """
+
+        self._nyx_delete(f"{NYX_CIRCLE_ENDPOINT}/{circle.name}")
+

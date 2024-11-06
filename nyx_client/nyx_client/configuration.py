@@ -38,7 +38,7 @@ class BaseNyxConfig:
     nyx_url: str
     nyx_password: str
     nyx_email: str
-    override_token: str | None
+    override_token: str | None = None
 
     @classmethod
     def from_env(
