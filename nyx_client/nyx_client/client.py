@@ -704,6 +704,8 @@ class NyxClient:
         license_url: str | None = None,
         download_url: str | None = None,
         file: RawIOBase | None = None,
+        access_control: Literal["all", "none"] = "none",
+        circles: list[Circle] | None = None,
     ) -> Data:
         """Updates existing data in the system.
 
@@ -722,6 +724,8 @@ class NyxClient:
             preview: A preview or sample of the data.
             price: The price of the data in cents. If 0, the data is free.
             license_url: The URL of the license for the data.
+            access_control: Either allow all, or allow none
+            circles: a list of circles to add share the data with
 
         Returns:
             A `Data` instance, containing the updated information.
@@ -732,6 +736,9 @@ class NyxClient:
         """
         if not download_url and not file:
             raise ValueError("Either download_url or file should be supplied")
+
+        if access_control and circles:
+            raise ValueError("Both access_control and circles should not be supplied together")
 
         if download_url and file:
             raise ValueError("both download_url and file should not be supplied together")
@@ -750,6 +757,7 @@ class NyxClient:
             "status": status,
             "preview": preview_base64_string,
             "contentType": content_type,
+            "accessControl": [ALLOW_NONE],
         }
         if price:
             data["price"] = price
@@ -759,6 +767,11 @@ class NyxClient:
             data["downloadURL"] = download_url
         if license_url:
             data["licenseURL"] = license_url
+
+        if access_control == "all":
+            data["accessControl"] = [ALLOW_ALL]
+        if circles:
+            data["circles"] = [c.did for c in circles]
 
         fields = {
             "productMetadata": json.dumps(data),
