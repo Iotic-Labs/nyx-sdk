@@ -25,8 +25,20 @@ class RemoteHost:
             did: the did of the remote host
     """
 
-    name: str
     did: str
+    name: str = "Unknown host"
+
+    @classmethod
+    def from_json(cls, value: dict):
+        """Builds a Remote Host object from json.
+
+        Args:
+            value: the json dictionary (returned from API).
+
+        Returns:
+            Remote Host object
+        """
+        return cls(name=value["name"], did=value["did"])
 
 
 @dataclass
@@ -40,9 +52,9 @@ class Circle:
             organizations: optional list of remote organizations in the circle
     """
 
-    did: str
     name: str
     description: str | None
+    did: str | None = None
     organizations: Sequence[RemoteHost] = ()
 
     @classmethod

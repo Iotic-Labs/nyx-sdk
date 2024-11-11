@@ -27,7 +27,7 @@ from urllib.parse import quote_plus
 import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
-from nyx_client.circles import Circle
+from nyx_client.circles import Circle, RemoteHost
 from nyx_client.configuration import BaseNyxConfig
 from nyx_client.data import Data
 from nyx_client.ontology import ALLOW_ALL, ALLOW_NONE
@@ -48,6 +48,7 @@ NYX_PRODUCTS_ENDPOINT = "products"
 NYX_META_SEARCH_TEXT_ENDPOINT = "meta/search/text"
 NYX_PURCHASES_TRANSACTIONS_ENDPOINT = "purchases/transactions"
 NYX_CIRCLE_ENDPOINT = "circles"
+NYX_ORG_ENDPOINT = "organizations"
 
 log = logging.getLogger(__name__)
 
@@ -593,7 +594,7 @@ class NyxClient:
         license_url: str | None = None,
         download_url: str | None = None,
         file: RawIOBase | None = None,
-        access_control: Literal["all", "none"] = "none",
+        access_control: Literal["all", "none"] | None = None,
         circles: list[Circle] | None = None,
     ) -> Data:
         """Create new data in the system.
@@ -647,18 +648,24 @@ class NyxClient:
             "status": status,
             "preview": preview_base64_string,
             "contentType": content_type,
-            "accessControl": [ALLOW_NONE],
+            "circles": [],
         }
+
         if download_url:
-            data["download_url"] = download_url
+            data["downloadURL"] = download_url
             data["size"] = size
 
         if price:
             data["price"] = price
         if license_url:
             data["licenseURL"] = license_url
+
         if access_control == "all":
             data["accessControl"] = [ALLOW_ALL]
+
+        if access_control == "none":
+            data["accessControl"] = [ALLOW_NONE]
+
         if circles:
             data["circles"] = [c.did for c in circles]
 
@@ -852,6 +859,18 @@ class NyxClient:
         creator = quote_plus(quote_plus(data.creator))
         self._nyx_delete(f"{NYX_PURCHASES_TRANSACTIONS_ENDPOINT}/{creator}/{data.name}")
 
+    def organizations(self) -> list[RemoteHost]:
+        """Get a list of all organizations in the federated network.
+
+        Returns:
+            A list of `RemoteHost` objects
+
+        Raises:
+            requests.HTTPError: if the API request fails.
+        """
+        raw_orgs = self._nyx_get(NYX_ORG_ENDPOINT)
+        return [RemoteHost.from_json(org) for org in raw_orgs]
+
     def get_circles(self) -> list[Circle]:
         """Get a list of circles.
 
@@ -864,16 +883,24 @@ class NyxClient:
         circles_raw = self._nyx_get(NYX_CIRCLE_ENDPOINT)
         return [Circle.from_json(r) for r in circles_raw]
 
-    def create_circle(self, circle: Circle):
+    def create_circle(self, circle: Circle) -> Circle:
         """Create a circle.
 
         Args:
             circle: The circle to be created.
 
+        Returns:
+            An updated `Circle` object
+
         Raises:
             requests.HTTPError: If the API request fails.
         """
-        self._nyx_post(NYX_CIRCLE_ENDPOINT, data=circle.as_dict())
+        circle_json = circle.as_dict()
+        circle_json.pop("did")
+        resp = self._nyx_post(NYX_CIRCLE_ENDPOINT, data=circle_json)
+
+        circle.did = resp["did"]
+        return circle
 
     def update_circle(self, circle: Circle):
         """Updates a circle, based on the cirle's name.
@@ -884,10 +911,22 @@ class NyxClient:
         Raises:
             requests.HTTPError: If the API request fails.
         """
-        self._nyx_put(f"{NYX_CIRCLE_ENDPOINT}/{circle.name}", data=circle.as_dict())
+        circle_json = circle.as_dict()
+        self._nyx_put(f"{NYX_CIRCLE_ENDPOINT}/{circle.name}", data=circle_json)
+
+    def delete_circle_by_name(self, circle_name: str):
+        """Deletes a circle.
+
+        Args:
+            circle_name: The name of the circle to be deleted.
+
+        Raises:
+            requests.HTTPError: If the API request fails.
+        """
+        self._nyx_delete(f"{NYX_CIRCLE_ENDPOINT}/{circle_name}")
 
     def delete_circle(self, circle: Circle):
-        """Deletes a circle, based on the cirle's name.
+        """Deletes a circle.
 
         Args:
             circle: The circle to be deleted.
@@ -895,4 +934,4 @@ class NyxClient:
         Raises:
             requests.HTTPError: If the API request fails.
         """
-        self._nyx_delete(f"{NYX_CIRCLE_ENDPOINT}/{circle.name}")
+        self.delete_circle_by_name(circle.name)
