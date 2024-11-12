@@ -191,7 +191,7 @@ class NyxClient:
                 content_type="multipart/form-data" if multipart else "application/json", extra_headers=headers
             ),
         )
-        if resp.status_code == 400:
+        if resp.status_code >= 400:
             log.warning(resp.json())
         resp.raise_for_status()
 
@@ -711,7 +711,7 @@ class NyxClient:
         license_url: str | None = None,
         download_url: str | None = None,
         file: RawIOBase | None = None,
-        access_control: Literal["all", "none"] = "none",
+        access_control: Literal["all", "none"] | None = None,
         circles: list[Circle] | None = None,
     ) -> Data:
         """Updates existing data in the system.
@@ -764,7 +764,6 @@ class NyxClient:
             "status": status,
             "preview": preview_base64_string,
             "contentType": content_type,
-            "accessControl": [ALLOW_NONE],
         }
         if price:
             data["price"] = price
@@ -774,7 +773,8 @@ class NyxClient:
             data["downloadURL"] = download_url
         if license_url:
             data["licenseURL"] = license_url
-
+        if access_control == "none":
+            data["accessControl"] = [ALLOW_NONE]
         if access_control == "all":
             data["accessControl"] = [ALLOW_ALL]
         if circles:
@@ -882,6 +882,21 @@ class NyxClient:
         """
         circles_raw = self._nyx_get(NYX_CIRCLE_ENDPOINT)
         return [Circle.from_json(r) for r in circles_raw]
+
+    def get_circle_by_name(self, circle_name: str) -> Circle:
+        """Get a list of circles.
+
+        Args:
+            circle_name: The name of the circle to get.
+
+        Returns:
+            A `Circle` object
+
+        Raises:
+            requests.HTTPError: if the API request fails.
+        """
+        circle_raw = self._nyx_get(NYX_CIRCLE_ENDPOINT + "/" + circle_name)
+        return Circle.from_json(circle_raw)
 
     def create_circle(self, circle: Circle) -> Circle:
         """Create a circle.
