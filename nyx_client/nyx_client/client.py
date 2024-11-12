@@ -191,7 +191,7 @@ class NyxClient:
                 content_type="multipart/form-data" if multipart else "application/json", extra_headers=headers
             ),
         )
-        if resp.status_code >= 400:
+        if resp.status_code == 400:
             log.warning(resp.json())
         resp.raise_for_status()
 
@@ -595,7 +595,7 @@ class NyxClient:
         download_url: str | None = None,
         file: RawIOBase | None = None,
         access_control: Literal["all", "none"] | None = None,
-        circles: list[Circle] | None = None,
+        circles: Sequence[Circle] = (),
     ) -> Data:
         """Create new data in the system.
 
@@ -669,6 +669,10 @@ class NyxClient:
         if circles:
             data["circles"] = [c.did for c in circles]
 
+        # We need to specify either access control or one circle
+        if len(circles) == 0 and access_control is None:
+            data["accessControl"] = [ALLOW_NONE]
+
         fields = {
             "productMetadata": json.dumps(data),
         }
@@ -712,7 +716,7 @@ class NyxClient:
         download_url: str | None = None,
         file: RawIOBase | None = None,
         access_control: Literal["all", "none"] | None = None,
-        circles: list[Circle] | None = None,
+        circles: Sequence[Circle] = (),
     ) -> Data:
         """Updates existing data in the system.
 
@@ -779,6 +783,10 @@ class NyxClient:
             data["accessControl"] = [ALLOW_ALL]
         if circles:
             data["circles"] = [c.did for c in circles]
+
+        # We need to specify either access control or one circle
+        if len(circles) == 0 and access_control is None:
+            data["accessControl"] = [ALLOW_NONE]
 
         fields = {
             "productMetadata": json.dumps(data),
@@ -869,7 +877,7 @@ class NyxClient:
             requests.HTTPError: if the API request fails.
         """
         raw_orgs = self._nyx_get(NYX_ORG_ENDPOINT)
-        return [RemoteHost.from_json(org) for org in raw_orgs]
+        return [RemoteHost.from_dict(org) for org in raw_orgs]
 
     def get_circles(self) -> list[Circle]:
         """Get a list of circles.
@@ -881,7 +889,7 @@ class NyxClient:
             requests.HTTPError: if the API request fails.
         """
         circles_raw = self._nyx_get(NYX_CIRCLE_ENDPOINT)
-        return [Circle.from_json(r) for r in circles_raw]
+        return [Circle.from_dict(r) for r in circles_raw]
 
     def get_circle_by_name(self, circle_name: str) -> Circle:
         """Get a list of circles.
@@ -896,7 +904,7 @@ class NyxClient:
             requests.HTTPError: if the API request fails.
         """
         circle_raw = self._nyx_get(NYX_CIRCLE_ENDPOINT + "/" + circle_name)
-        return Circle.from_json(circle_raw)
+        return Circle.from_dict(circle_raw)
 
     def create_circle(self, circle: Circle) -> Circle:
         """Create a circle.

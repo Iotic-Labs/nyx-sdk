@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from dataclasses import asdict, dataclass
-from typing import Sequence
+from typing import Any, Sequence
 
 
 @dataclass(frozen=True)
@@ -21,22 +21,22 @@ class RemoteHost:
     """Represents a remote host on the network.
 
     Attributes:
-            name: the name of the organization
-            did: the did of the remote host
+        name: the name of the organization
+        did: the did of the remote host
     """
 
     did: str
-    name: str = "Unknown host"
+    name: str = ""
 
     @classmethod
-    def from_json(cls, value: dict):
+    def from_dict(cls, value: dict) -> "RemoteHost":
         """Builds a Remote Host object from json.
 
         Args:
             value: the json dictionary (returned from API).
 
         Returns:
-            Remote Host object
+            `RemoteHost` object
         """
         return cls(name=value["name"], did=value["did"])
 
@@ -46,19 +46,19 @@ class Circle:
     """Represents a circle, which is a grouping of remote hosts.
 
     Attributes:
-            did: the did of the circle
-            name: the name of the circle
-            description: optional description of what the circle is
-            organizations: optional list of remote organizations in the circle
+        did: the did of the circle
+        name: the name of the circle, this must be unique within your instance
+        description: optional description of what the circle is
+        organizations: optional list of remote organizations in the circle
     """
 
     name: str
-    description: str | None
+    description: str | None = None
     did: str | None = None
     organizations: Sequence[RemoteHost] = ()
 
     @classmethod
-    def from_json(cls, value: dict):
+    def from_dict(cls, value: dict) -> "Circle":
         """Builds a circle object from json.
 
         Args:
@@ -77,7 +77,7 @@ class Circle:
             organizations=allowed_hosts,
         )
 
-    def as_dict(self) -> dict:
+    def as_dict(self) -> dict[str, Any]:
         """Returns the object as a dictionary.
 
         Returns:
