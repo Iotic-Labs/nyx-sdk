@@ -33,7 +33,7 @@ class RemoteHost:
         """Builds a Remote Host object from json.
 
         Args:
-            value: the json dictionary (returned from API).
+            value: a dictionary of the organization object
 
         Returns:
             `RemoteHost` object
@@ -62,7 +62,7 @@ class Circle:
         """Builds a circle object from json.
 
         Args:
-            value: the json dictionary (returned from API).
+            value: a dictionary of the circle object
 
         Returns:
             Circle object
