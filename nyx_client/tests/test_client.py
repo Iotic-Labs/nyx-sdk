@@ -104,9 +104,18 @@ def test_get_all_categories_empty_result(nyx_client):
         assert result == []
 
 
-@patch.object(NyxClient, "_nyx_post")
-def test_create_data_with_with_size(mock_nyx_post, nyx_client):
-    mock_nyx_post.json.return_value = {}
+# Minimum response fields necessary for create response to work
+MIN_CREATE_DATA_RESPONSE = {
+    "description": "something",
+    "genre": "whatever",
+    "categories": (),
+    "size": 101,
+    "accessURL": "http://here.com",
+}
+
+
+def test_create_data_with_with_size(requests_mock, nyx_client):
+    requests_mock.post("https://mock.nyx.url/api/portal/products", json=MIN_CREATE_DATA_RESPONSE)
     result = nyx_client.create_data(
         content_type="text/csv",
         description="foo",
@@ -118,7 +127,7 @@ def test_create_data_with_with_size(mock_nyx_post, nyx_client):
         genre="x",
     )
 
-    assert result.size == 100
+    assert result.size == MIN_CREATE_DATA_RESPONSE["size"]
 
 
 @patch.object(NyxClient, "_nyx_post")
@@ -175,7 +184,7 @@ def test_delete_data_not_found(requests_mock, nyx_client):
 
 
 def test_sparql_query_constructs_data(nyx_client):
-    # Mock response from _sparql_query
+    # Mock response from "get data" endpoint
     mock_response = [
         {
             "accessURL": "https://example.com/access",
