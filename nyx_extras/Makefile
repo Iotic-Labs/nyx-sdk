@@ -2,7 +2,7 @@ export
 
 PYTEST_ARGS?=-v
 
-.PHONY: clean setup-poetry install lint fix build docs generate-secrets
+.PHONY: clean setup-poetry install lint fix build docs tests
 
 clean:
 	rm -rf dist/
@@ -27,5 +27,5 @@ build:
 docs:
 	cd docs && pip install -r requirements.txt && make clean html
 
-test:
+tests:
 	poetry run pytest tests $(PYTEST_ARGS)
