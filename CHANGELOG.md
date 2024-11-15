@@ -5,10 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - 2024-??-??
+
+### Changed
+- Configuration (env) files are now found **relative to the current working directory** instead of `nyx_client`
+  installation directory. (There is no change if the configuration file has been specified using an absolute path.)
+- `env_file` for `BaseNyxConfig.from_env` and `NyxConfigExtended.from_env` is still optional but now defaults to `.env`
+  (instead of `None`), to clearly illustrate what the default search path will be.
+
 ## [0.2.3] - 2024-11-14
 
 ### Added
-- `Circle` object added, along side methods on `NyxClient` to get, create, update and delete circles, to enabled 
+- `Circle` object added, along side methods on `NyxClient` to get, create, update and delete circles, to enabled
    selective sharing of data
 - `NyxClient.create_data` now creates data privately by default. Additional parameters of `circles` and `access_control`
   have been added, to enable selective sharing of the data

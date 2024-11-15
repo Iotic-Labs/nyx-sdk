@@ -16,13 +16,16 @@ def mock_dotenv_values():
         "NYX_EMAIL": "mock@email.com",
         "NYX_PASSWORD": "mock_password",
     }
-    with patch("nyx_client.configuration.dotenv_values", return_value=mock_values):
+    with (
+        patch("nyx_client.configuration.dotenv_values", return_value=mock_values),
+        patch("nyx_client.configuration.find_dotenv", return_value="mock_env_location/.env"),
+    ):
         yield
 
 
 @pytest.fixture
 def mock_config():
-    config = BaseNyxConfig.from_env(env_file=None, override_token="test_token")
+    config = BaseNyxConfig.from_env(override_token="test_token")
     yield config
 
 
