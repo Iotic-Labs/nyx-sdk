@@ -15,9 +15,12 @@ If you're looking to contribute, feel free to check out the issues section on Gi
 
 2. Install the package in development mode
    ```shell
+   cd nyx_extras
    make setup-poetry install
    ```
-   **Note**: This will also install optional extras (such as `langchain-openai`).
+   **Notes**:
+      - This will also install optional extras (such as `langchain-openai`).
+      - If you only want to install `nyx-client` in development mode, use the equivalent targets in the `nyx_client` directory instead.
 
    or if building with NyxLangChain install with
 
