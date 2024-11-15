@@ -20,15 +20,12 @@ from typing import Any, Sequence
 
 @dataclass(frozen=True)
 class RemoteHost:
-    """Represents a remote host on the network.
-
-    Attributes:
-        name: the name of the organization
-        did: the did of the remote host
-    """
+    """Represents a remote host on the network."""
 
     did: str
+    """the name of the organization"""
     name: str = ""
+    """the name of the organization"""
 
     @classmethod
     def from_dict(cls, value: dict) -> "RemoteHost":
@@ -45,19 +42,16 @@ class RemoteHost:
 
 @dataclass
 class Circle:
-    """Represents a circle, which is a grouping of remote hosts.
-
-    Attributes:
-        did: the did of the circle
-        name: the name of the circle, this must be unique within your instance
-        description: optional description of what the circle is
-        organizations: optional list of remote organizations in the circle
-    """
+    """Represents a circle, which is a grouping of remote hosts."""
 
     name: str
+    """The name of the circle, this must be unique within your instance."""
     description: str | None = None
+    """Optional description of what the circle is."""
     did: str | None = None
+    """The did of the circle."""
     organizations: Sequence[RemoteHost] = ()
+    """Optional list of remote organizations in the circle."""
 
     @classmethod
     def from_dict(cls, value: dict) -> "Circle":

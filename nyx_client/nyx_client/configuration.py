@@ -26,19 +26,16 @@ from dotenv import dotenv_values
 
 @dataclass(frozen=True)
 class BaseNyxConfig:
-    """Configuration for the Nyx client.
-
-    Attributes:
-        nyx_url: The URL of the Nyx instance.
-        nyx_email: The email of the Nyx user.
-        nyx_password: The password of the Nyx user.
-        override_token: Allows injection of JWT token
-    """
+    """Configuration for the Nyx client."""
 
     nyx_url: str
+    """The URL of the Nyx instance."""
     nyx_password: str
+    """The email of the Nyx user."""
     nyx_email: str
+    """The password of the Nyx user."""
     override_token: str | None = None
+    """Allows injection of JWT token"""
 
     @classmethod
     def from_env(
@@ -103,17 +100,14 @@ class ConfigType(str, enum.Enum):
 
 @dataclass(frozen=True)
 class NyxConfigExtended:
-    """Extended configuration for Nyx client with API integration.
-
-    Attributes:
-        api_key: The API key for the selected provider.
-        provider: The type of configuration provider.
-        base_config: The base Nyx configuration.
-    """
+    """Extended configuration for Nyx client with API integration."""
 
     api_key: str
+    """The API key for the selected provider."""
     provider: ConfigType
+    """The type of configuration provider."""
     base_config: BaseNyxConfig
+    """The base Nyx configuration."""
 
     @classmethod
     def from_env(

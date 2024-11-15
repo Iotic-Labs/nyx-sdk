@@ -72,15 +72,16 @@ class NyxClient:
     """A client for interacting with the Nyx system.
 
     This client provides methods for querying and processing data from Nyx.
-
-    Attributes:
-        config: Configuration for the Nyx client.
-        org: Your organization name on Nyx.
-        name: Your Nyx Username.
-        community_mode: If you're using community mode.
     """
 
     config: BaseNyxConfig
+    """Configuration for the Nyx client."""
+    org: str
+    """Your organization name on Nyx."""
+    name: str
+    """Your Nyx Username."""
+    community_mode: bool
+    """If you're using community mode."""
 
     def __init__(
         self,
