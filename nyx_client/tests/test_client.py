@@ -1,12 +1,17 @@
-from unittest.mock import MagicMock, patch
+from collections.abc import Generator
+from typing import Any
+from unittest.mock import patch
 
 import pytest
 import requests
-from requests_mock import ANY
+from requests_mock import Mocker as RequestsMocker
 
 from nyx_client.client import NyxClient, SparqlResultType
 from nyx_client.configuration import BaseNyxConfig
 from nyx_client.data import Data
+
+TEST_NYX_URL = "https://mock.nyx.url"
+TEST_NYX_API_ROOT = f"{TEST_NYX_URL}/api/portal/"
 
 
 @pytest.fixture(autouse=True)
@@ -24,46 +29,46 @@ def mock_dotenv_values():
 
 
 @pytest.fixture
-def mock_config():
+def mock_config() -> Generator[BaseNyxConfig]:
     config = BaseNyxConfig.from_env(override_token="test_token")
     yield config
 
 
 @pytest.fixture
-def nyx_client(mock_config):
+def nyx_client(mock_config: BaseNyxConfig) -> Generator[NyxClient]:
     with patch("nyx_client.client.NyxClient._setup"):
         client = NyxClient(config=mock_config)
         client.org = "test"
         yield client
 
 
-def test_nyx_client_initialization(nyx_client, mock_config):
+def test_nyx_client_initialization(nyx_client: NyxClient, mock_config: BaseNyxConfig):
     assert isinstance(nyx_client, NyxClient)
     assert nyx_client.config == mock_config
 
 
-def test_nyx_post(requests_mock, nyx_client):
+def test_nyx_post(requests_mock: RequestsMocker, nyx_client: NyxClient):
     rsp_data = {"key": "value"}
-    requests_mock.post("https://mock.nyx.url/api/portal/test_endpoint", json=rsp_data)
+    requests_mock.post(TEST_NYX_API_ROOT + "test_endpoint", json=rsp_data)
 
     result = nyx_client._nyx_post("test_endpoint", {"data": "test"})
     assert result == rsp_data
     assert requests_mock.call_count == 1
 
 
-def test_nyx_get(requests_mock, nyx_client):
+def test_nyx_get(requests_mock: RequestsMocker, nyx_client: NyxClient):
     rsp_data = {"key": "value"}
-    requests_mock.get("https://mock.nyx.url/api/portal/test_endpoint", json=rsp_data)
+    requests_mock.get(TEST_NYX_API_ROOT + "test_endpoint", json=rsp_data)
 
     result = nyx_client._nyx_get("test_endpoint")
     assert result == rsp_data
     assert requests_mock.call_count == 1
 
 
-def test_delete_data(requests_mock, nyx_client):
+def test_delete_data(requests_mock: RequestsMocker, nyx_client: NyxClient):
     name = "test_data"
 
-    requests_mock.delete(f"https://mock.nyx.url/api/portal/products/{name}")
+    requests_mock.delete(TEST_NYX_API_ROOT + f"products/{name}")
 
     data = Data(
         url="http://test.com",
@@ -80,79 +85,85 @@ def test_delete_data(requests_mock, nyx_client):
     assert requests_mock.call_count == 1
 
 
-def test_nyx_post_network_error(requests_mock, nyx_client):
-    requests_mock.post(ANY, exc=requests.ConnectionError)
+def test_nyx_post_network_error(requests_mock: RequestsMocker, nyx_client: NyxClient):
+    requests_mock.post(TEST_NYX_API_ROOT + "test_endpoint", exc=requests.ConnectionError)
 
     with pytest.raises(requests.ConnectionError):
         nyx_client._nyx_post("test_endpoint", {"data": "test"})
 
 
-def test_nyx_get_network_error(requests_mock, nyx_client):
-    requests_mock.get(ANY, exc=requests.ConnectionError)
+def test_nyx_get_network_error(requests_mock: RequestsMocker, nyx_client: NyxClient):
+    requests_mock.get(TEST_NYX_API_ROOT + "test_endpoint", exc=requests.ConnectionError)
 
     with pytest.raises(requests.ConnectionError):
         nyx_client._nyx_get("test_endpoint")
 
 
-def test_authorise_invalid_credentials(nyx_client):
-    with patch.object(nyx_client, "_nyx_post") as mock_post:
-        mock_post.side_effect = requests.HTTPError("401 Unauthorized")
-        with pytest.raises(requests.HTTPError):
-            nyx_client._authorise()
+def test_authorise_invalid_credentials(requests_mock: RequestsMocker, nyx_client: NyxClient):
+    requests_mock.post(TEST_NYX_API_ROOT + "auth/login", status_code=401)
+    with pytest.raises(requests.HTTPError):
+        nyx_client._authorise()
 
 
-def test_get_all_categories_empty_result(nyx_client):
-    with patch.object(nyx_client, "_nyx_get", return_value=[]):
-        result = nyx_client.categories()
-        assert result == []
+def test_get_all_categories_empty_result(requests_mock: RequestsMocker, nyx_client: NyxClient):
+    requests_mock.get(TEST_NYX_API_ROOT + "meta/categories", json=[])
+    result = nyx_client.categories()
+    assert result == []
 
 
 # Minimum response fields necessary for create response to work
 MIN_CREATE_DATA_RESPONSE = {
-    "description": "something",
-    "genre": "whatever",
-    "categories": (),
+    "description": "server description",
+    "genre": "server whatever",
+    "categories": ["server", "categories"],
     "size": 101,
-    "accessURL": "http://here.com",
+    "accessURL": "http://here.com/server",
 }
 
 
-def test_create_data_with_with_size(requests_mock, nyx_client):
-    requests_mock.post("https://mock.nyx.url/api/portal/products", json=MIN_CREATE_DATA_RESPONSE)
+def test_create_data_with_size(requests_mock: RequestsMocker, nyx_client: NyxClient):
+    requests_mock.post(TEST_NYX_API_ROOT + "products", json=MIN_CREATE_DATA_RESPONSE)
     result = nyx_client.create_data(
-        content_type="text/csv",
-        description="foo",
         name="a_name",
         title="a_title",
-        size=100,
-        download_url="http://here.com",
-        categories=[],
+        description="foo",
         genre="x",
+        categories=[],
+        content_type="text/csv",
+        size=MIN_CREATE_DATA_RESPONSE["size"] + 999,
+        download_url="http://here.com",
     )
 
+    # NOTE: The size from the response should be returned, not the input
     assert result.size == MIN_CREATE_DATA_RESPONSE["size"]
 
 
-@patch.object(NyxClient, "_nyx_post")
-def test_create_data_with_description(mock_nyx_post, nyx_client):
-    mock_nyx_post.json.return_value = {}
+def test_create_data_minimal(requests_mock: RequestsMocker, nyx_client: NyxClient):
+    requests_mock.post(TEST_NYX_API_ROOT + "products", json=MIN_CREATE_DATA_RESPONSE)
     result = nyx_client.create_data(
-        content_type="text/csv",
-        description="foo",
         name="a_name",
-        size=10,
         title="a_title",
-        download_url="http://here.com",
-        categories=[],
+        description="foo",
         genre="x",
+        categories=[],
+        content_type="text/csv",
+        download_url="http://here.com",
     )
-
+    assert result.name == "a_name"
+    assert result.title == "a_title"
     assert result.description == "foo"
+    assert result.content_type == "text/csv"
+    assert result.creator == nyx_client.org
+
+    # NOTE: The following should have values taken from the server response
+    assert result.size == MIN_CREATE_DATA_RESPONSE["size"]
+    assert result.url.startswith(MIN_CREATE_DATA_RESPONSE["accessURL"])
+    assert result.categories == MIN_CREATE_DATA_RESPONSE["categories"]
+    assert result.genre == MIN_CREATE_DATA_RESPONSE["genre"]
 
 
-@patch.object(NyxClient, "_nyx_post")
-def test_create_product_invalid_input(mock_nyx_post, nyx_client):
-    mock_nyx_post.side_effect = requests.HTTPError("400 Bad Request")
+def test_create_product_invalid_input(requests_mock: RequestsMocker, nyx_client: NyxClient):
+    requests_mock.post(TEST_NYX_API_ROOT + "products", status_code=400, json={})
     with pytest.raises(requests.HTTPError):
         nyx_client.create_data(
             name="",
@@ -166,10 +177,10 @@ def test_create_product_invalid_input(mock_nyx_post, nyx_client):
         )
 
 
-def test_delete_data_not_found(requests_mock, nyx_client):
+def test_delete_data_not_found(requests_mock: RequestsMocker, nyx_client: NyxClient):
     name = "non_existent"
 
-    requests_mock.delete(f"https://mock.nyx.url/api/portal/products/{name}", status_code=404)
+    requests_mock.delete(TEST_NYX_API_ROOT + f"products/{name}", status_code=404)
 
     data = Data(
         url="http://test.com",
@@ -186,51 +197,54 @@ def test_delete_data_not_found(requests_mock, nyx_client):
         nyx_client.delete_data(data)
 
 
-def test_sparql_query_constructs_data(nyx_client):
+def assert_data_matches_dict_response(data: Data, resp: dict[str, Any], nyx_client: NyxClient):
+    assert data.name == resp["name"]
+    assert data.title == resp["title"]
+    assert data.description == resp["description"]
+    assert data.org == nyx_client.org
+    assert data.url == f"{resp['accessURL']}?buyer_org={nyx_client.org}"
+    assert data.content_type == resp["contentType"]
+    assert data.creator == resp["creator"]
+    assert data.genre == resp["genre"]
+    assert set(data.categories) == set(resp["categories"])
+    assert data.size == resp["size"]
+
+
+def test_get_data_returns_data_objects(requests_mock: RequestsMocker, nyx_client: NyxClient):
     # Mock response from "get data" endpoint
     mock_response = [
         {
-            "accessURL": "https://example.com/access",
-            "title": "Test Data",
             "name": "test_data",
+            "title": "Test Data",
+            "description": "Some description of sorts",
+            "accessURL": "https://example.com/access",
             "contentType": "application/json",
             "creator": "TestCreator",
-            "size": 321,
-            "description": "Some description of sorts",
-            "categories": ["ai"],
             "genre": "ai",
+            "categories": ["ai"],
+            "size": 321,
         }
     ]
+    requests_mock.get(
+        TEST_NYX_API_ROOT + "products?" + "&".join(("scope=global", "include=all")),
+        json=mock_response,
+    )
 
-    # Patch the _sparql_query method to return our mock response
-    with patch.object(nyx_client, "_nyx_get", return_value=mock_response):
-        # Call a method that uses _sparql_query and constructs Data
-        # For this example, we'll use get_all_datasets, but you can use any method that fits
-        data = nyx_client.get_data()
-
-        # Assert that we got a list with one data element
-        assert len(data) == 1
-
-        # Assert that the Data has the correct attributes
-        assert data[0].url == f"https://example.com/access?buyer_org={nyx_client.org}"
-        assert data[0].title == "Test Data"
-        assert data[0].name == "test_data"
-        assert data[0].content_type == "application/json"
-        assert data[0].size == 321
-        assert data[0].creator == "TestCreator"
-        assert data[0].description == "Some description of sorts"
+    result = nyx_client.get_data()
+    assert len(result) == 1
+    assert_data_matches_dict_response(result[0], mock_response[0], nyx_client)
 
 
-def test_sparql_query(requests_mock, nyx_client):
+def test_sparql_query(requests_mock: RequestsMocker, nyx_client: NyxClient):
     query = "SELECT * WHERE { ?s ?p ?o }"
     expected_response = '{"results": {"bindings": []}}'
     requests_mock.post(
-        "https://mock.nyx.url/api/portal/meta/sparql/global",
+        TEST_NYX_API_ROOT + "meta/sparql/global",
         text=expected_response,
         headers={"Content-Type": "application/sparql-results+json"},
     )
     requests_mock.post(
-        "https://mock.nyx.url/api/portal/meta/sparql/local",
+        TEST_NYX_API_ROOT + "meta/sparql/local",
         text=expected_response,
         headers={"Content-Type": "application/sparql-results+json"},
     )
@@ -240,11 +254,12 @@ def test_sparql_query(requests_mock, nyx_client):
 
     # Test with different result type
     result = nyx_client.sparql_query(query, result_type=SparqlResultType.SPARQL_XML, local_only=True)
+    assert result == expected_response
     assert requests_mock.last_request.headers["Accept"] == SparqlResultType.SPARQL_XML.value
     assert "local" in requests_mock.last_request.url
 
 
-def test_search(requests_mock, nyx_client):
+def test_search(requests_mock: RequestsMocker, nyx_client: NyxClient):
     mock_response = [
         {
             "name": "test_dataset",
@@ -258,10 +273,29 @@ def test_search(requests_mock, nyx_client):
         }
     ]
 
-    requests_mock.get("https://mock.nyx.url/api/portal/meta/search/text", json=mock_response)
+    requests_mock.get(TEST_NYX_API_ROOT + "meta/search/text", json=mock_response)
+
+    requests_mock.get(
+        TEST_NYX_API_ROOT
+        + "meta/search/text?"
+        + "&".join(
+            (
+                "genre=test_genre",
+                "creator=test_creator",
+                "text=test",
+                "license=MIT",
+                "contentType=text/csv",
+                "timeout=5",
+                "scope=local",
+                "include=all",
+                *(f"category={cat}" for cat in ("test_category", "another_cat")),
+            )
+        ),
+        json=mock_response,
+    )
 
     result = nyx_client.search(
-        categories=["test_category"],
+        categories=["test_category", "another_cat"],
         genre="test_genre",
         creator="test_creator",
         text="test",
@@ -276,89 +310,92 @@ def test_search(requests_mock, nyx_client):
     assert isinstance(result[0], Data)
     assert result[0].name == "test_dataset"
 
-    # Verify query parameters
-    last_request = requests_mock.last_request
-    assert "category=test_category" in last_request.url
-    assert "genre=test_genre" in last_request.url
-    assert "creator=test_creator" in last_request.url
-    assert "text=test" in last_request.url
-    assert "license=MIT" in last_request.url
-    assert "contentType=text%2Fcsv" in last_request.url
-    assert "include=all" in last_request.url
-    assert "timeout=5" in last_request.url
-    assert "scope=local" in last_request.url
 
+def test_my_subscriptions(requests_mock: RequestsMocker, nyx_client: NyxClient):
+    mock_rsp = [
+        {
+            "name": "test_sub",
+            "title": "Test Subscription",
+            "description": "Test Description",
+            "accessURL": "https://example.com/data",
+            "contentType": "text/csv",
+            "creator": "test_creator",
+            "size": 1234,
+            "categories": ["test_category"],
+            "genre": "test_genre",
+        }
+    ]
 
-def test_my_subscriptions(nyx_client):
-    with patch.object(nyx_client, "get_data") as mock_get_data:
-        mock_data = [
-            Data(
-                name="test_sub",
-                title="Test Subscription",
-                description="Test Description",
-                url="https://example.com/data",
-                content_type="text/csv",
-                creator="test_creator",
-                org="test_org",
-                categories=["test_category"],
-                genre="test_genre",
+    requests_mock.get(
+        TEST_NYX_API_ROOT
+        + "products?"
+        + "&".join(
+            (
+                "genre=test_genre",
+                "creator=test_creator",
+                "license=MIT",
+                "contentType=text/csv",
+                "include=subscribed",
+                "scope=global",
+                *(f"category={cat}" for cat in ("test_category", "another_category")),
             )
-        ]
-        mock_get_data.return_value = mock_data
+        ),
+        json=mock_rsp,
+    )
 
-        result = nyx_client.my_subscriptions(
-            categories=["test_category"],
-            genre="test_genre",
-            creator="test_creator",
-            license="MIT",
-            content_type="text/csv",
-        )
+    result = nyx_client.my_subscriptions(
+        categories=["test_category", "another_category"],
+        genre="test_genre",
+        creator="test_creator",
+        license="MIT",
+        content_type="text/csv",
+    )
 
-        mock_get_data.assert_called_once_with(
-            categories=["test_category"],
-            genre="test_genre",
-            creator="test_creator",
-            license="MIT",
-            content_type="text/csv",
-            subscription_state="subscribed",
-        )
-        assert result == mock_data
+    assert len(result) == 1
+    assert_data_matches_dict_response(result[0], mock_rsp[0], nyx_client)
 
 
-def test_my_data(nyx_client):
-    with patch.object(nyx_client, "get_data") as mock_get_data:
-        mock_data = [
-            Data(
-                name="test_data",
-                title="My Test Data",
-                description="Test Description",
-                url="https://example.com/data",
-                content_type="text/csv",
-                creator=nyx_client.org,
-                org=nyx_client.org,
-                categories=["test_category"],
-                genre="test_genre",
+def test_my_data(requests_mock: RequestsMocker, nyx_client: NyxClient):
+    mock_rsp = [
+        {
+            "name": "test_data",
+            "title": "My Test Data",
+            "description": "Test Description",
+            "accessURL": "https://example.com/data",
+            "contentType": "text/csv",
+            "creator": nyx_client.org,
+            "size": 1234,
+            "categories": ["test_category"],
+            "genre": "test_genre",
+        }
+    ]
+
+    requests_mock.get(
+        TEST_NYX_API_ROOT
+        + "products?"
+        + "&".join(
+            (
+                "genre=test_genre",
+                f"creator={nyx_client.org}",
+                "license=MIT",
+                "contentType=text/csv",
+                "include=all",
+                "scope=local",
+                "category=test_category",
             )
-        ]
-        mock_get_data.return_value = mock_data
+        ),
+        json=mock_rsp,
+    )
 
-        result = nyx_client.my_data(
-            categories=["test_category"], genre="test_genre", license="MIT", content_type="text/csv"
-        )
+    result = nyx_client.my_data(
+        categories=["test_category"], genre="test_genre", license="MIT", content_type="text/csv"
+    )
 
-        mock_get_data.assert_called_once_with(
-            categories=["test_category"],
-            genre="test_genre",
-            creator=nyx_client.org,
-            license="MIT",
-            content_type="text/csv",
-            subscription_state="all",
-            local_only=True,
-        )
-        assert result == mock_data
+    assert len(result) == 1
+    assert_data_matches_dict_response(result[0], mock_rsp[0], nyx_client)
 
 
-def test_update_data(requests_mock, nyx_client):
+def test_update_data(requests_mock: RequestsMocker, nyx_client: NyxClient):
     name = "test_data"
     mock_response = {
         "name": name,
@@ -369,9 +406,10 @@ def test_update_data(requests_mock, nyx_client):
         "creator": nyx_client.org,
         "categories": ["updated_category"],
         "genre": "updated_genre",
+        "size": 4456,
     }
 
-    requests_mock.patch(f"https://mock.nyx.url/api/portal/products/{name}", json=mock_response)
+    requests_mock.patch(TEST_NYX_API_ROOT + f"products/{name}", json=mock_response)
 
     result = nyx_client.update_data(
         name=name,
@@ -385,19 +423,14 @@ def test_update_data(requests_mock, nyx_client):
         preview="Test preview",
     )
 
-    assert isinstance(result, Data)
-    assert result.name == name
-    assert result.title == "Updated Title"
-    assert result.description == "Updated Description"
-    assert result.content_type == "text/csv"
-    assert result.creator == nyx_client.org
+    assert_data_matches_dict_response(result, mock_response, nyx_client)
 
     # Verify the multipart request was formed correctly
     last_request = requests_mock.last_request
     assert last_request.headers["Content-Type"].startswith("multipart/form-data")
 
 
-def test_subscribe_unsubscribe(requests_mock, nyx_client):
+def test_subscribe_unsubscribe(requests_mock: RequestsMocker, nyx_client: NyxClient):
     test_data = Data(
         name="test_data",
         title="Test Data",
@@ -411,20 +444,20 @@ def test_subscribe_unsubscribe(requests_mock, nyx_client):
     )
 
     # Test subscribe
-    requests_mock.post("https://mock.nyx.url/api/portal/purchases/transactions", json={"status": "success"})
+    requests_mock.post(TEST_NYX_API_ROOT + "purchases/transactions", json={"status": "success"})
 
     nyx_client.subscribe(test_data)
     assert requests_mock.call_count == 1
     assert requests_mock.last_request.json() == {"product_name": test_data.name, "seller_org": test_data.creator}
 
     # Test unsubscribe
-    requests_mock.delete(f"https://mock.nyx.url/api/portal/purchases/transactions/{test_data.creator}/{test_data.name}")
+    requests_mock.delete(TEST_NYX_API_ROOT + f"purchases/transactions/{test_data.creator}/{test_data.name}")
 
     nyx_client.unsubscribe(test_data)
     assert requests_mock.call_count == 2
 
 
-def test_subscribe_error(requests_mock, nyx_client):
+def test_subscribe_error(requests_mock: RequestsMocker, nyx_client: NyxClient):
     test_data = Data(
         name="test_data",
         title="Test Data",
@@ -443,7 +476,7 @@ def test_subscribe_error(requests_mock, nyx_client):
         "code": "SUBSCRIPTION_ERROR",
     }
 
-    requests_mock.post("https://mock.nyx.url/api/portal/purchases/transactions", status_code=400, json=error_response)
+    requests_mock.post(TEST_NYX_API_ROOT + "purchases/transactions", status_code=400, json=error_response)
 
     with pytest.raises(requests.HTTPError) as exc_info:
         nyx_client.subscribe(test_data)
@@ -453,7 +486,7 @@ def test_subscribe_error(requests_mock, nyx_client):
     assert exc_info.value.response.json() == error_response
 
 
-def test_unsubscribe_error(requests_mock, nyx_client):
+def test_unsubscribe_error(requests_mock: RequestsMocker, nyx_client: NyxClient):
     test_data = Data(
         name="test_data",
         title="Test Data",
@@ -467,7 +500,7 @@ def test_unsubscribe_error(requests_mock, nyx_client):
     )
 
     requests_mock.delete(
-        f"https://mock.nyx.url/api/portal/purchases/transactions/{test_data.creator}/{test_data.name}", status_code=404
+        TEST_NYX_API_ROOT + f"purchases/transactions/{test_data.creator}/{test_data.name}", status_code=404
     )
 
     with pytest.raises(requests.HTTPError):
