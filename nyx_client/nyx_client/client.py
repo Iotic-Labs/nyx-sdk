@@ -31,6 +31,7 @@ from nyx_client.circles import Circle, RemoteHost
 from nyx_client.configuration import BaseNyxConfig
 from nyx_client.data import Data
 from nyx_client.ontology import ALLOW_ALL, ALLOW_NONE
+from nyx_client.property import Property
 from nyx_client.utils import auth_retry, ensure_setup
 
 # Constants for URLs
@@ -371,6 +372,22 @@ class NyxClient:
         """
         return self._nyx_get(NYX_META_LICENSES_ENDPOINT)
 
+    def _data_from_response_object(self, obj: dict[str, Any]) -> Data:
+        """Constructs a new `Data` instance for an object contained in an API response."""
+        return Data(
+            name=obj["name"],
+            title=obj["title"],
+            description=obj["description"],
+            org=self.org,
+            url=obj["accessURL"],
+            content_type=obj["contentType"],
+            creator=obj["creator"],
+            categories=obj["categories"],
+            genre=obj["genre"],
+            size=obj["size"],
+            custom_metadata=(Property.from_dict(prop) for prop in obj.get("customMetadata", ())),
+        )
+
     def search(
         self,
         *,
@@ -418,20 +435,7 @@ class NyxClient:
             url = NYX_META_SEARCH_TEXT_ENDPOINT
 
         resps = self._nyx_get(url, params=params)
-        return [
-            Data(
-                name=resp["name"],
-                title=resp["title"],
-                description=resp["description"],
-                url=resp["accessURL"],
-                content_type=resp["contentType"],
-                creator=resp["creator"],
-                org=self.org,
-                categories=resp["categories"],
-                genre=resp["genre"],
-            )
-            for resp in resps
-        ]
+        return [self._data_from_response_object(obj) for obj in resps]
 
     def my_subscriptions(
         self,
@@ -534,21 +538,7 @@ class NyxClient:
             params["contentType"] = content_type
 
         resps = self._nyx_get(NYX_PRODUCTS_ENDPOINT, params=params)
-        return [
-            Data(
-                name=resp["name"],
-                title=resp["title"],
-                description=resp["description"],
-                url=resp["accessURL"],
-                content_type=resp["contentType"],
-                creator=resp["creator"],
-                size=resp["size"],
-                org=self.org,
-                categories=resp["categories"],
-                genre=resp["genre"],
-            )
-            for resp in resps
-        ]
+        return [self._data_from_response_object(obj) for obj in resps]
 
     def get_my_data_by_name(self, name: str) -> Data:
         """Retrieve your own data based on its unique name.
@@ -565,18 +555,7 @@ class NyxClient:
             requests.HTTPError: If the API request fails.
         """
         resp = self._nyx_get(f"{NYX_PRODUCTS_ENDPOINT}/{name}")
-        return Data(
-            name=resp["name"],
-            title=resp["title"],
-            description=resp["description"],
-            url=resp["accessURL"],
-            content_type=resp["contentType"],
-            creator=resp["creator"],
-            org=self.org,
-            size=resp["size"],
-            categories=resp["categories"],
-            genre=resp["genre"],
-        )
+        return self._data_from_response_object(resp)
 
     @ensure_setup
     def create_data(
@@ -597,6 +576,7 @@ class NyxClient:
         file: RawIOBase | None = None,
         access_control: Literal["all", "none"] | None = None,
         circles: Sequence[Circle] = (),
+        custom_metadata: Sequence[Property] = (),
     ) -> Data:
         """Create new data in the system.
 
@@ -604,8 +584,7 @@ class NyxClient:
             name: The unique identifier for the data.
             title: The display title of the data.
             description: A detailed description of the data.
-            size: Approximate size of the data, if a file is provided the size
-                  will be calculated
+            size: Approximate size of the data, if a file is provided the size will be calculated
             genre: The genre or category of the data.
             categories: A list of categories the data belongs to.
             download_url: The URL where the data can be downloaded.
@@ -617,7 +596,9 @@ class NyxClient:
             price: The price of the data in cents. If 0, the data is free.
             license_url: The URL of the license for the data.
             access_control: Either allow all, or allow none
-            circles: a list of circles to add share the data with
+            circles: A list of circles to add share the data with
+            custom_metadata: Additional metadata properties to decorate the data with. Note that nyx-internal properties
+                are not allowed.
 
         Returns:
             A `Data` instance, containing the download URL and title.
@@ -649,22 +630,18 @@ class NyxClient:
             "status": status,
             "preview": preview_base64_string,
             "contentType": content_type,
-            "circles": [],
+            "customMetadata": [prop.as_dict() for prop in custom_metadata],
         }
-
+        if price:
+            data["price"] = price
         if download_url:
             data["downloadURL"] = download_url
             data["size"] = size
-
-        if price:
-            data["price"] = price
         if license_url:
             data["licenseURL"] = license_url
-
         if access_control == "all":
             data["accessControl"] = [ALLOW_ALL]
-
-        if access_control == "none":
+        elif access_control == "none":
             data["accessControl"] = [ALLOW_NONE]
 
         if circles:
@@ -680,24 +657,14 @@ class NyxClient:
 
         if file:
             fields["productData"] = (name, file, content_type)
+
         multipart_data = MultipartEncoder(fields=fields)
 
         headers = {"X-Requested-With": "nyx-sdk", "Content-Type": multipart_data.content_type}
 
         resp = self._nyx_post(NYX_PRODUCTS_ENDPOINT, data, headers=headers, multipart=multipart_data)
 
-        return Data(
-            name=name,
-            title=title,
-            description=description,
-            org=self.org,
-            content_type=content_type,
-            size=resp.get("size"),
-            url=resp.get("accessURL", resp.get("downloadURL")),
-            creator=self.org,
-            categories=resp["categories"],
-            genre=resp["genre"],
-        )
+        return self._data_from_response_object(resp)
 
     @ensure_setup
     def update_data(
@@ -718,6 +685,7 @@ class NyxClient:
         file: RawIOBase | None = None,
         access_control: Literal["all", "none"] | None = None,
         circles: Sequence[Circle] = (),
+        custom_metadata: Sequence[Property] = (),
     ) -> Data:
         """Updates existing data in the system.
 
@@ -725,7 +693,7 @@ class NyxClient:
             name: The unique identifier for the data.
             title: The display title of the data.
             description: A detailed description of the data.
-            size: The size of the data, typically in bytes.
+            size: Approximate size of the data, if a file is provided the size will be calculated
             genre: The genre or category of the data.
             categories: A list of categories the data belongs to.
             download_url: The URL where the data can be downloaded.
@@ -737,7 +705,9 @@ class NyxClient:
             price: The price of the data in cents. If 0, the data is free.
             license_url: The URL of the license for the data.
             access_control: Either allow all, or allow none
-            circles: a list of circles to add share the data with
+            circles: A list of circles to add share the data with
+            custom_metadata: Additional metadata properties to decorate the data with. Note that nyx-internal properties
+                are not allowed.
 
         Returns:
             A `Data` instance, containing the updated information.
@@ -760,8 +730,8 @@ class NyxClient:
         preview_base64_string = base64_bytes.decode("utf-8")
 
         data = {
-            "title": title,
             "name": name,
+            "title": title,
             "description": description,
             "genre": genre,
             "categories": categories,
@@ -769,19 +739,20 @@ class NyxClient:
             "status": status,
             "preview": preview_base64_string,
             "contentType": content_type,
+            "customMetadata": [prop.as_dict() for prop in custom_metadata],
         }
         if price:
             data["price"] = price
-            data["size"] = size
-
         if download_url:
             data["downloadURL"] = download_url
+            data["size"] = size
         if license_url:
             data["licenseURL"] = license_url
-        if access_control == "none":
-            data["accessControl"] = [ALLOW_NONE]
         if access_control == "all":
             data["accessControl"] = [ALLOW_ALL]
+        elif access_control == "none":
+            data["accessControl"] = [ALLOW_NONE]
+
         if circles:
             data["circles"] = [c.did for c in circles]
 
@@ -792,6 +763,7 @@ class NyxClient:
         fields = {
             "productMetadata": json.dumps(data),
         }
+
         if file:
             fields["productData"] = (name, file, content_type)
 
@@ -801,18 +773,7 @@ class NyxClient:
 
         resp = self._nyx_patch(f"{NYX_PRODUCTS_ENDPOINT}/{name}", data, headers, multipart_data)
 
-        return Data(
-            name=name,
-            title=title,
-            description=description,
-            org=self.org,
-            content_type=content_type,
-            size=resp.get("size"),
-            url=resp.get("accessURL", resp.get("downloadURL")),
-            creator=self.org,
-            categories=resp["categories"],
-            genre=resp["genre"],
-        )
+        return self._data_from_response_object(resp)
 
     def delete_data(self, data: Data):
         """Delete the provided data from Nyx.

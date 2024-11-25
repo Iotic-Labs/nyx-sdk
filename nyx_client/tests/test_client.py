@@ -9,9 +9,18 @@ from requests_mock import Mocker as RequestsMocker
 from nyx_client.client import NyxClient, SparqlResultType
 from nyx_client.configuration import BaseNyxConfig
 from nyx_client.data import Data
+from nyx_client.property import Property
 
 TEST_NYX_URL = "https://mock.nyx.url"
 TEST_NYX_API_ROOT = f"{TEST_NYX_URL}/api/portal/"
+
+TEST_PROPERTIES = [
+    Property.lang_string("https://example.com/somePredicate1", "hello there", "en"),
+    Property.string("https://example.com/somePredicate2", "abcd"),
+    Property.literal("https://example.com/somePredicate3", "1.234", "float"),
+    Property.uri("https://example.com/somePredicate4", "https://example.com/some/where"),
+]
+TEST_PROPERTIES_ENCODED = [prop.as_dict() for prop in TEST_PROPERTIES]
 
 
 @pytest.fixture(autouse=True)
@@ -111,9 +120,13 @@ def test_get_all_categories_empty_result(requests_mock: RequestsMocker, nyx_clie
     assert result == []
 
 
-# Minimum response fields necessary for create response to work
+# Minimum response fields necessary for create response to work.
 MIN_CREATE_DATA_RESPONSE = {
+    "name": "aha",
+    "title": "aha2",
     "description": "server description",
+    "contentType": "ctype",
+    "creator": "the creator",
     "genre": "server whatever",
     "categories": ["server", "categories"],
     "size": 101,
@@ -149,17 +162,36 @@ def test_create_data_minimal(requests_mock: RequestsMocker, nyx_client: NyxClien
         content_type="text/csv",
         download_url="http://here.com",
     )
-    assert result.name == "a_name"
-    assert result.title == "a_title"
-    assert result.description == "foo"
-    assert result.content_type == "text/csv"
-    assert result.creator == nyx_client.org
-
-    # NOTE: The following should have values taken from the server response
+    # NOTE: The following should have values taken from the server response, regardless of what the client has supplied
+    assert result.name == MIN_CREATE_DATA_RESPONSE["name"]
+    assert result.title == MIN_CREATE_DATA_RESPONSE["title"]
+    assert result.description == MIN_CREATE_DATA_RESPONSE["description"]
+    assert result.content_type == MIN_CREATE_DATA_RESPONSE["contentType"]
+    assert result.creator == MIN_CREATE_DATA_RESPONSE["creator"]
     assert result.size == MIN_CREATE_DATA_RESPONSE["size"]
     assert result.url.startswith(MIN_CREATE_DATA_RESPONSE["accessURL"])
     assert result.categories == MIN_CREATE_DATA_RESPONSE["categories"]
     assert result.genre == MIN_CREATE_DATA_RESPONSE["genre"]
+    assert result.custom_metadata == []
+
+
+def test_create_data_with_custom_metadata(requests_mock: RequestsMocker, nyx_client: NyxClient):
+    data = MIN_CREATE_DATA_RESPONSE.copy()
+    data["customMetadata"] = TEST_PROPERTIES_ENCODED
+
+    requests_mock.post(TEST_NYX_API_ROOT + "products", json=data)
+    result = nyx_client.create_data(
+        name="a_name",
+        title="a_title",
+        description="foo",
+        genre="x",
+        categories=[],
+        content_type="text/csv",
+        download_url="http://here.com",
+    )
+
+    # NOTE: Other fields validated elsewhere already
+    assert result.custom_metadata == TEST_PROPERTIES
 
 
 def test_create_product_invalid_input(requests_mock: RequestsMocker, nyx_client: NyxClient):
@@ -208,6 +240,7 @@ def assert_data_matches_dict_response(data: Data, resp: dict[str, Any], nyx_clie
     assert data.genre == resp["genre"]
     assert set(data.categories) == set(resp["categories"])
     assert data.size == resp["size"]
+    assert data.custom_metadata == [Property.from_dict(prop) for prop in resp.get("customMetadata", ())]
 
 
 def test_get_data_returns_data_objects(requests_mock: RequestsMocker, nyx_client: NyxClient):
@@ -223,6 +256,7 @@ def test_get_data_returns_data_objects(requests_mock: RequestsMocker, nyx_client
             "genre": "ai",
             "categories": ["ai"],
             "size": 321,
+            "customMetadata": TEST_PROPERTIES_ENCODED,
         }
     ]
     requests_mock.get(
@@ -270,6 +304,8 @@ def test_search(requests_mock: RequestsMocker, nyx_client: NyxClient):
             "creator": "test_creator",
             "categories": ["test_category"],
             "genre": "test_genre",
+            "size": 999,
+            "customMetadata": TEST_PROPERTIES_ENCODED,
         }
     ]
 
@@ -307,8 +343,7 @@ def test_search(requests_mock: RequestsMocker, nyx_client: NyxClient):
     )
 
     assert len(result) == 1
-    assert isinstance(result[0], Data)
-    assert result[0].name == "test_dataset"
+    assert_data_matches_dict_response(result[0], mock_response[0], nyx_client)
 
 
 def test_my_subscriptions(requests_mock: RequestsMocker, nyx_client: NyxClient):
@@ -323,6 +358,7 @@ def test_my_subscriptions(requests_mock: RequestsMocker, nyx_client: NyxClient):
             "size": 1234,
             "categories": ["test_category"],
             "genre": "test_genre",
+            "customMetadata": TEST_PROPERTIES_ENCODED,
         }
     ]
 
@@ -367,6 +403,7 @@ def test_my_data(requests_mock: RequestsMocker, nyx_client: NyxClient):
             "size": 1234,
             "categories": ["test_category"],
             "genre": "test_genre",
+            "customMetadata": TEST_PROPERTIES_ENCODED,
         }
     ]
 
@@ -407,6 +444,7 @@ def test_update_data(requests_mock: RequestsMocker, nyx_client: NyxClient):
         "categories": ["updated_category"],
         "genre": "updated_genre",
         "size": 4456,
+        "customMetadata": TEST_PROPERTIES_ENCODED,
     }
 
     requests_mock.patch(TEST_NYX_API_ROOT + f"products/{name}", json=mock_response)

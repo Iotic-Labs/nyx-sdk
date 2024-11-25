@@ -15,8 +15,11 @@
 """Module that manages individual Nyx Data."""
 
 import logging
+from collections.abc import Sequence
 
 import requests
+
+from nyx_client.property import Property
 
 log = logging.getLogger(__name__)
 
@@ -26,6 +29,30 @@ class Data:
 
     This class encapsulates the information and functionality related to the data
     in the Nyx system, including its metadata and content retrieval.
+    """
+
+    name: str
+    """Unique name of data."""
+    title: str
+    """Human readable title of data."""
+    description: str
+    """Short description of data."""
+    org: str
+    """Your organization name."""
+    url: str
+    """The access URL of the data."""
+    content_type: str
+    """Content type of the data, can be in format application/json, or URI."""
+    creator: str
+    """Org name that created the data."""
+    categories: list[str]
+    """The categories of the data."""
+    genre: str
+    """The genre of the data."""
+    size: int
+    """Size in bytes of the data."""
+    custom_metadata: list[Property]
+    """Additional metadata properties to decorate the data with. Note that nyx-internal properties are not allowed.
     """
 
     def __init__(
@@ -40,20 +67,9 @@ class Data:
         categories: list[str],
         genre: str,
         size: int = 0,
+        custom_metadata: Sequence[Property] = (),
     ):
         """Initialize a Data instance.
-
-        Args:
-            name: Unique name of data.
-            title: Human readable title of data.
-            description: Short description of data.
-            org: Your organization name.
-            url: The access URL of the data.
-            content_type: Content type of the data, can be in format application/json, or URI.
-            creator: Org name that created the data.
-            categories: The categories of the data.
-            genre: The genre of the data.
-            size: Size in bytes of the data.
 
         Raises:
             KeyError: If any of the required fields are missing.
@@ -70,6 +86,7 @@ class Data:
         self.creator = creator
         self.categories = categories
         self.genre = genre
+        self.custom_metadata = list(custom_metadata)
 
     def __str__(self):
         """Return a string representation of the Data instance."""
