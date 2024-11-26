@@ -390,24 +390,26 @@ class NyxClient:
 
     def search(
         self,
+        text: str,
         *,
         categories: Sequence[str] = (),
         genre: str | None = None,
         creator: str | None = None,
-        text: str | None = None,
         license: str | None = None,
         content_type: str | None = None,
         subscription_state: Literal["subscribed", "all", "not-subscribed"] = "all",
         timeout: int = 3,
         local_only: bool = False,
     ) -> list[Data]:
-        """Search for new data in the Nyx system.
+        """Find products using text in the Nyx network (or local instance).
+
+        Usage of this endpoint is discouraged. Use :func:`get_data` instead, unless you want to perform a text search.
 
         Args:
+            text: Text to search for.
             categories: Sequence of categories to filter by.
             genre: Genre to filter by.
             creator: Creator to filter by.
-            text: Text to search for.
             license: License to filter by.
             content_type: Content type to filter by.
             subscription_state: Subscription state to filter by.
@@ -418,8 +420,12 @@ class NyxClient:
         Returns:
             A list of `Data` instances matching the search criteria.
         """
-        url = NYX_PRODUCTS_ENDPOINT
-        params = {"include": subscription_state, "timeout": timeout, "scope": "local" if local_only else "global"}
+        params = {
+            "text": text,
+            "include": subscription_state,
+            "timeout": timeout,
+            "scope": "local" if local_only else "global",
+        }
         if categories:
             params["category"] = categories
         if genre:
@@ -430,11 +436,8 @@ class NyxClient:
             params["license"] = license
         if content_type:
             params["contentType"] = content_type
-        if text:
-            params["text"] = text
-            url = NYX_META_SEARCH_TEXT_ENDPOINT
 
-        resps = self._nyx_get(url, params=params)
+        resps = self._nyx_get(NYX_META_SEARCH_TEXT_ENDPOINT, params=params)
         return [self._data_from_response_object(obj) for obj in resps]
 
     def my_subscriptions(
@@ -506,7 +509,7 @@ class NyxClient:
         subscription_state: Literal["subscribed", "all", "not-subscribed"] = "all",
         local_only: bool = False,
     ) -> list[Data]:
-        """Retrieve data from the federated network.
+        """Find products in the Nyx network (or local instance).
 
         Args:
             categories: Sequence of categories to filter by.
