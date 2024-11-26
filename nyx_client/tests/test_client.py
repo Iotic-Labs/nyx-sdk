@@ -331,10 +331,10 @@ def test_search(requests_mock: RequestsMocker, nyx_client: NyxClient):
     )
 
     result = nyx_client.search(
+        "test",
         categories=["test_category", "another_cat"],
         genre="test_genre",
         creator="test_creator",
-        text="test",
         license="MIT",
         content_type="text/csv",
         subscription_state="all",
