@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - 2024-??-??
+
+- Introduce (optional) support for setting custom metadata (properties) on `Data` instances. See `custom_metadata` parameter documentation for `NyxClient.create_data()`. The `nyx_client.properties` module contains helpers for creating properties. An example:
+    ```python
+    client.create_data(
+        "my_dataset",
+        ...,
+        custom_metadata=[
+            Property.lang_string(SOME_NAMESPACE+"pred1", "good morning", "en"),
+            Property.string(SOME_NAMESPACE+"pred2", "plain string"),
+            Property.literal(SOME_NAMESPACE+"pred3", b64encode(b"binary blob").decode("ascii"), "base64Binary"),
+            Property.uri(RDF_TYPE, NS+"SomeClass"),
+        ],
+    )
+    ```
+
 ## [0.2.4] - 2024-11-20
 
 ### Changed
