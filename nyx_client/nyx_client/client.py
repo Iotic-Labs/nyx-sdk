@@ -29,6 +29,7 @@ from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 from nyx_client.circles import Circle, RemoteHost
 from nyx_client.configuration import BaseNyxConfig
+from nyx_client.connection import Connection
 from nyx_client.data import Data
 from nyx_client.ontology import ALLOW_ALL, ALLOW_NONE
 from nyx_client.property import Property
@@ -50,6 +51,7 @@ NYX_META_SEARCH_TEXT_ENDPOINT = "meta/search/text"
 NYX_PURCHASES_TRANSACTIONS_ENDPOINT = "purchases/transactions"
 NYX_CIRCLE_ENDPOINT = "circles"
 NYX_ORG_ENDPOINT = "organizations"
+NYX_CONNECTIONS_ENDPOINT = "connections"
 
 log = logging.getLogger(__name__)
 
@@ -381,7 +383,7 @@ class NyxClient:
             org=self.org,
             url=obj["accessURL"],
             content_type=obj["contentType"],
-            creator=obj["creator"],
+            creator=obj.get("creator", self.org),
             categories=obj["categories"],
             genre=obj["genre"],
             size=obj["size"],
@@ -580,6 +582,7 @@ class NyxClient:
         access_control: Literal["all", "none"] | None = None,
         circles: Sequence[Circle] = (),
         custom_metadata: Sequence[Property] = (),
+        connection_id: str | None = None,
     ) -> Data:
         """Create new data in the system.
 
@@ -602,6 +605,7 @@ class NyxClient:
             circles: A list of circles to add share the data with
             custom_metadata: Additional metadata properties to decorate the data with. Note that nyx-internal properties
                 are not allowed.
+            connection_id: the id of a connection to use
 
         Returns:
             A `Data` instance, containing the download URL and title.
@@ -647,6 +651,9 @@ class NyxClient:
         elif access_control == "none":
             data["accessControl"] = [ALLOW_NONE]
 
+        if connection_id:
+            data["connectionId"] = connection_id
+
         if circles:
             data["circles"] = [c.did for c in circles]
 
@@ -689,6 +696,7 @@ class NyxClient:
         access_control: Literal["all", "none"] | None = None,
         circles: Sequence[Circle] = (),
         custom_metadata: Sequence[Property] = (),
+        connection_id: str | None = None,
     ) -> Data:
         """Updates existing data in the system.
 
@@ -711,6 +719,7 @@ class NyxClient:
             circles: A list of circles to add share the data with
             custom_metadata: Additional metadata properties to decorate the data with. Note that nyx-internal properties
                 are not allowed.
+            connection_id: the id of a connection to use
 
         Returns:
             A `Data` instance, containing the updated information.
@@ -755,6 +764,9 @@ class NyxClient:
             data["accessControl"] = [ALLOW_ALL]
         elif access_control == "none":
             data["accessControl"] = [ALLOW_NONE]
+
+        if connection_id:
+            data["connectionId"] = connection_id
 
         if circles:
             data["circles"] = [c.did for c in circles]
@@ -923,3 +935,15 @@ class NyxClient:
             requests.HTTPError: If the API request fails.
         """
         self.delete_circle_by_name(circle.name)
+
+    def get_connections(self) -> list[Connection]:
+        """Lists all connections.
+
+        Returns:
+            A list of `Connection` objects
+
+        Raises:
+            requests.HTTPError: if the API request fails.
+        """
+        connections = self._nyx_get(NYX_CONNECTIONS_ENDPOINT)
+        return [Connection.from_dict(c) for c in connections]
