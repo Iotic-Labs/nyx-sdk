@@ -937,8 +937,11 @@ class NyxClient:
         """
         self.delete_circle_by_name(circle.name)
 
-    def get_connections(self) -> list[Connection]:
+    def get_connections(self, allow_upload: bool | None = None) -> list[Connection]:
         """Lists all connections.
+
+        Args:
+            allow_upload: Filter the connections by allow_upload, defaults to show all.
 
         Returns:
             A list of `Connection` objects
@@ -946,5 +949,7 @@ class NyxClient:
         Raises:
             requests.HTTPError: if the API request fails.
         """
-        connections = self._nyx_get(NYX_CONNECTIONS_ENDPOINT)
+        params = {"allow_upload": allow_upload} if allow_upload is not None else None
+        connections = self._nyx_get(NYX_CONNECTIONS_ENDPOINT, params=params)
+
         return [Connection.from_dict(c) for c in connections]
