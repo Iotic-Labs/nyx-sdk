@@ -27,14 +27,14 @@ class Connection:
     name: str
     """the name of the connection"""
     json_blob: dict[str, Any]
-    """dictionary of non sensitive storage config"""
+    """json blob of non sensitive storage config"""
     description: str = ""
     """the description of the connection"""
     allow_update: bool = False
     """boolean to denote if upload is allowed from this connection"""
 
     @classmethod
-    def from_dict(cls, value: dict) -> "Connection":
+    def from_dict(cls, value: dict[str, Any]) -> "Connection":
         """Builds a connection object from json.
 
         Args:

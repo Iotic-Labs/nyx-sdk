@@ -54,6 +54,8 @@ class Data:
     custom_metadata: list[Property]
     """Additional metadata properties to decorate the data with. Note that nyx-internal properties are not allowed.
     """
+    connection_id: str
+    """The ID of the connection"""
 
     def __init__(
         self,
@@ -68,6 +70,7 @@ class Data:
         genre: str,
         size: int = 0,
         custom_metadata: Sequence[Property] = (),
+        connection_id: str | None = None,
     ):
         """Initialize a Data instance.
 
@@ -87,6 +90,9 @@ class Data:
         self.categories = categories
         self.genre = genre
         self.custom_metadata = list(custom_metadata)
+        if connection_id is None:
+            connection_id = "default"
+        self.connection_id = connection_id
 
     def __str__(self):
         """Return a string representation of the Data instance."""

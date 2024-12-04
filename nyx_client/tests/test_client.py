@@ -194,6 +194,25 @@ def test_create_data_with_custom_metadata(requests_mock: RequestsMocker, nyx_cli
     assert result.custom_metadata == TEST_PROPERTIES
 
 
+def test_create_data_with_connection(requests_mock: RequestsMocker, nyx_client: NyxClient):
+    data = MIN_CREATE_DATA_RESPONSE.copy()
+    data["connectionId"] = "test"
+
+    requests_mock.post(TEST_NYX_API_ROOT + "products", json=data)
+    result = nyx_client.create_data(
+        name="a_name",
+        title="a_title",
+        description="foo",
+        genre="x",
+        categories=[],
+        content_type="text/csv",
+        download_url="http://here.com",
+        connection_id="test",
+    )
+
+    assert result.connection_id == data["connectionId"]
+
+
 def test_create_product_invalid_input(requests_mock: RequestsMocker, nyx_client: NyxClient):
     requests_mock.post(TEST_NYX_API_ROOT + "products", status_code=400, json={})
     with pytest.raises(requests.HTTPError):
