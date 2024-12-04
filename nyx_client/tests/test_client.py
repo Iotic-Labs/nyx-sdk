@@ -207,7 +207,7 @@ def test_create_data_with_connection(requests_mock: RequestsMocker, nyx_client: 
         categories=[],
         content_type="text/csv",
         download_url="http://here.com",
-        connection_id="test",
+        connection_id="blah",
     )
 
     assert result.connection_id == data["connectionId"]

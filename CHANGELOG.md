@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 2024-??-??
+## [0.2.5] - 2024-12-05
 
 - Introduce (optional) support for setting custom metadata (properties) on `Data` instances. See `custom_metadata` parameter documentation for `NyxClient.create_data()`. The `nyx_client.properties` module contains helpers for creating properties. An example:
     ```python
@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
         ],
     )
     ```
-- Add `Connections` class to allow referencing data from 3rd party storage, `NyxClient.get_connections` returns a list of 
+- Add `Connections` class to allow referencing data from 3rd party storage: `NyxClient.get_connections` returns a list of 
   connections, and `NyxClient.create_data` and `NyxClient.update_data` take an optional `connection_id` to set
 
 ## [0.2.4] - 2024-11-20
