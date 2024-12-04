@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
         ],
     )
     ```
+- Add `Connections` class to allow referencing data from 3rd party storage, `NyxClient.get_connections` returns a list of 
+  connections, and `NyxClient.create_data` and `NyxClient.update_data` take an optional `connection_id` to set
 
 ## [0.2.4] - 2024-11-20
 
