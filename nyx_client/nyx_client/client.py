@@ -383,11 +383,12 @@ class NyxClient:
             org=self.org,
             url=obj["accessURL"],
             content_type=obj["contentType"],
-            creator=obj.get("creator", self.org),
+            creator=obj["creator"],
             categories=obj["categories"],
             genre=obj["genre"],
             size=obj["size"],
             custom_metadata=(Property.from_dict(prop) for prop in obj.get("customMetadata", ())),
+            connection_id=obj.get("connectionId", "default"),
         )
 
     def search(
@@ -605,7 +606,7 @@ class NyxClient:
             circles: A list of circles to add share the data with
             custom_metadata: Additional metadata properties to decorate the data with. Note that nyx-internal properties
                 are not allowed.
-            connection_id: the id of a connection to use
+            connection_id: the id of a connection to use (id from :class`Connection`)
 
         Returns:
             A `Data` instance, containing the download URL and title.
