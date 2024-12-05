@@ -606,7 +606,7 @@ class NyxClient:
             circles: A list of circles to add share the data with
             custom_metadata: Additional metadata properties to decorate the data with. Note that nyx-internal properties
                 are not allowed.
-            connection_id: the id of a connection to use (id from :class`.Connection`)
+            connection_id: the id of a connection to use (id from :class:`.Connection`)
 
         Returns:
             A `Data` instance, containing the download URL and title.

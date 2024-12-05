@@ -55,7 +55,7 @@ class Data:
     """Additional metadata properties to decorate the data with. Note that nyx-internal properties are not allowed.
     """
     connection_id: str | None
-    """The ID of the connection (id from :class`.Connection`)"""
+    """The ID of the connection (id from :class:`.Connection`)"""
 
     def __init__(
         self,

@@ -62,6 +62,7 @@ class Uri:
 
 
 PropertyValue = LangLiteral | StringLiteral | Literal | Uri
+"""The value (object) of a property."""
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -75,7 +76,10 @@ class Property:
     """The key (predicate) of the property. Must be an IRI."""
 
     value: PropertyValue
-    """The value (object) of the property"""
+    """The value (object) of the property.
+
+    One of :class:`LangLiteral`, :class:`StringLiteral`, :class:`Literal` or :class:`Uri`
+    """
 
     def as_dict(self) -> dict[str, Any]:
         """Returns the object as a dictionary.
