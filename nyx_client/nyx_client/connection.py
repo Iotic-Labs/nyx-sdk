@@ -14,11 +14,11 @@
 
 """Module for connection (3rd party data integrations) definitions in Nyx."""
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Any
 
 
-@dataclass(frozen=True)
+@dataclass
 class Connection:
     """Represents a connection to a 3rd party data integration."""
 
@@ -50,3 +50,12 @@ class Connection:
             description=value.get("description", ""),
             allow_update=value.get("allow_upload", False),
         )
+
+    def as_dict(self) -> dict[str, Any]:
+        """Returns the object as a dictionary.
+
+        Returns:
+            A dictionary of the connection, that matches POST/PUT requests in the API.
+
+        """
+        return asdict(self)

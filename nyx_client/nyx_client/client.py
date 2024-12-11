@@ -953,3 +953,57 @@ class NyxClient:
         connections = self._nyx_get(NYX_CONNECTIONS_ENDPOINT, params=params)
 
         return [Connection.from_dict(c) for c in connections]
+
+    def delete_connection(self, connection: Connection):
+        """Deletes a connection.
+
+        Args:
+            connection: The connection to be deleted.
+
+        Raises:
+            requests.HTTPError: If the API request fails.
+        """
+        self._nyx_delete(f"{NYX_CIRCLE_ENDPOINT}/{connection.id}")
+
+    def create_connection(
+        self, name: str, description: str, json_blob: dict[str, Any], secret_json_blob: dict[str, Any]
+    ) -> Connection:
+        """Create a connection.
+
+        Args:
+            name: the connection name
+            description: a description of the connection
+            json_blob: a dictionary of attributes that are non-sensitive
+            secret_json_blob: a dictionary of sensitive attributes, such as authorization keys
+
+        Returns:
+            An `Connection` object
+
+        Raises:
+            requests.HTTPError: If the API request fails.
+        """
+        connection_json = {
+            "name": name,
+            "description": description,
+            "json_blob": json_blob,
+            "secret_json_blob": secret_json_blob,
+        }
+        resp = self._nyx_post(NYX_CONNECTIONS_ENDPOINT, data=connection_json)
+
+        connection_json["id"] = resp["id"]
+        return Connection.from_dict(connection_json)
+
+    def update_connection(self, connection: Connection, secret_json_blob: dict[str, Any] | None = None):
+        """Updates a connection.
+
+        Args:
+            connection: The connection to be updated.
+            secret_json_blob: optional, if provided it will update entries in the secrets
+
+        Raises:
+            requests.HTTPError: If the API request fails.
+        """
+        connection_json = connection.as_dict()
+        if secret_json_blob:
+            connection_json["secret_json_blob"] = secret_json_blob
+        self._nyx_patch(f"{NYX_CONNECTIONS_ENDPOINT}/{connection.id}", data=connection_json)
